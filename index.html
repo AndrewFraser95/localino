@@ -269,6 +269,21 @@ input{font:inherit;font-size:16px;color:inherit}
 .takings b{font-family:var(--font-num);font-size:22px}
 .takings .grow{margin-right:auto}
 
+/* Orders today */
+.hsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hsum div{background:var(--bg);border-radius:12px;padding:10px 12px;display:grid;gap:2px;min-width:0}
+.hsum span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.hsum b{font:600 22px var(--font-num)}
+.hsum b.sm{font-size:15px;line-height:30px}
+.hist{display:grid;gap:8px}
+.hist details{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.hist summary{list-style:none;cursor:pointer;min-height:56px;padding:8px 14px;display:flex;align-items:center;gap:10px;font-weight:700}
+.hist summary::-webkit-details-marker{display:none}
+.hist .hn,.hist .hp{font-family:var(--font-num);font-weight:600}
+.hist .ht{font-family:var(--font-num);font-weight:500;color:var(--muted)}
+.hist .hl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.hist .tk{margin:0 12px 12px;font-size:16px}
+
 .toast{
   position:fixed;z-index:60;left:50%;transform:translateX(-50%);
   top:calc(env(safe-area-inset-top,0px) + 12px);max-width:calc(100% - 32px);
@@ -303,7 +318,10 @@ input{font:inherit;font-size:16px;color:inherit}
 <div class="app">
   <header class="bar">
     <div class="brand">Order till</div>
-    <button class="btn sm" data-act="settings" type="button">Menu &amp; prices</button>
+    <div class="orow">
+      <button class="btn sm" data-act="history" type="button">Orders today <span class="tcount" id="hcount">0</span></button>
+      <button class="btn sm" data-act="settings" type="button">Menu &amp; prices</button>
+    </div>
   </header>
   <div class="main">
     <section class="menu" aria-label="Menu">
@@ -410,7 +428,7 @@ var todayStr=function(){return new Date().toLocaleDateString('en-CA')};
 var desc=function(){return ''}; // ingredients are not shown; staff know the menu
 
 /* ---------- State ---------- */
-var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,takings:{date:todayStr(),orders:0,total:0}};
+var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr()};
 
 function load(){
   try{
@@ -432,7 +450,8 @@ function load(){
     if(Array.isArray(d.lines)) S.lines=d.lines.filter(function(l){return l&&ITEM[l.id]&&l.qty>=1}).map(function(l){
       return {id:l.id,qty:Math.floor(l.qty),off:Array.isArray(l.off)?l.off:[],add:(Array.isArray(l.add)?l.add:[]).filter(function(x){return EX[x]}),notes:Array.isArray(l.notes)?l.notes:[],text:typeof l.text==='string'?l.text:''};
     });
-    if(d.takings&&typeof d.takings.orders==='number') S.takings={date:String(d.takings.date||''),orders:d.takings.orders,total:d.takings.total||0};
+    if(typeof d.day==='string') S.day=d.day;
+    if(Array.isArray(d.log)) S.log=d.log.filter(function(o){return o&&typeof o.total==='number'&&Array.isArray(o.lines)});
   }catch(e){}
   ensureTakings();
 }
@@ -440,12 +459,13 @@ function save(){
   try{
     var items={}; Object.keys(ITEM).forEach(function(id){var it=ITEM[id]; items[id]={name:it.name,price:it.price,avail:it.avail}});
     var extras={}; Object.keys(EX).forEach(function(id){var e=EX[id]; extras[id]={name:e.name,price:e.price}});
-    localStorage.setItem(KEY,JSON.stringify({items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,takings:S.takings}));
+    localStorage.setItem(KEY,JSON.stringify({items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,log:S.log}));
   }catch(e){}
 }
 function ensureTakings(){
+  // a new day starts a fresh log and order numbering
   var t=todayStr();
-  if(S.takings.date!==t) S.takings={date:t,orders:0,total:0};
+  if(S.day!==t){S.day=t;S.log=[];S.n=1;}
 }
 
 /* ---------- Order maths ---------- */
@@ -541,6 +561,7 @@ function renderTotals(){
   $('#total').textContent=money(t);
   $('#mtotal').textContent=money(t);
   $('#onum').textContent=S.n;
+  $('#hcount').textContent=S.log.length;
   $('#mcount').textContent=n?('View order · '+n+(n===1?' item':' items')):'Order is empty';
   $('#btn-pay').disabled=!n;
   $('#btn-ticket').disabled=!n;
@@ -710,17 +731,51 @@ function complete(how){
     if(g===null||g<tot) return;
     msg+=g>tot?' · change '+money(g-tot):' · exact';
   } else msg+=' · card';
-  ensureTakings(); S.takings.orders++; S.takings.total+=tot;
+  ensureTakings();
+  S.log.push({n:S.n,t:Date.now(),label:S.label,total:tot,how:how==='cash'?'cash':'card',given:how==='cash'?g:null,
+    lines:S.lines.map(function(l){var it=ITEM[l.id];return {q:l.qty,name:it.name,mods:mods(l).map(function(x){return x.t}),amt:lineUnit(l)*l.qty}})});
   S.n++; S.lines=[]; S.label=''; $('#label').value='';
   closeSheet(); $('#order').classList.remove('open');
   renderAll(); save(); toast(msg);
+}
+
+/* ---- Orders today ---- */
+function hhmm(ms){return new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
+function openHistory(){renderHistory(); openSheet('history')}
+function renderHistory(){
+  ensureTakings();
+  var L=S.log, tot=0, cash=0, card=0;
+  L.forEach(function(o){tot+=o.total; if(o.how==='cash') cash+=o.total; else card+=o.total;});
+  var h='<div class="hsum"><div><span>Orders</span><b>'+L.length+'</b></div>'+
+    '<div><span>Takings</span><b>'+money(tot)+'</b></div>'+
+    '<div><span>Cash / card</span><b class="sm">'+money(cash)+' / '+money(card)+'</b></div></div>';
+  if(!L.length){
+    h+='<div class="empty"><b>No orders yet today</b><span>Each completed order is listed here with the time it went through.</span></div>';
+  } else {
+    h+='<div class="hist">'+L.slice().reverse().map(function(o){
+      var tx=['ORDER '+o.n+(o.label?'   '+o.label.toUpperCase():'')];
+      o.lines.forEach(function(l){
+        tx.push(l.q+'× '+l.name.toUpperCase()+'   '+money(l.amt));
+        l.mods.forEach(function(m){tx.push('     '+m.toUpperCase())});
+      });
+      tx.push('','TOTAL '+money(o.total)+'   '+(o.how==='cash'?'CASH'+(o.given!=null?' (GIVEN '+money(o.given)+', CHANGE '+money(o.given-o.total)+')':''):'CARD'));
+      var what=o.label||o.lines.map(function(l){return l.q+'× '+l.name}).join(', ');
+      return '<details><summary><span class="hn">#'+o.n+'</span><span class="ht">'+hhmm(o.t)+'</span><span class="hl">'+esc(what)+'</span><span class="hp">'+money(o.total)+'</span></summary>'+
+        '<pre class="tk">'+esc(tx.join('\n'))+'</pre></details>';
+    }).join('')+'</div>';
+  }
+  paintSheet(
+    '<div class="shead"><h2>Orders today</h2><p>Tap an order to see its ticket. Saved on this device and cleared automatically each new day.</p></div>'+
+    '<div class="sbody">'+h+'</div>'+
+    '<div class="sfoot"><button class="btn primary" type="button" data-act="close">Close</button></div>'
+  );
 }
 
 /* ---- Settings ---- */
 function openSettings(){renderSettings(); openSheet('settings')}
 function renderSettings(){
   ensureTakings();
-  var t=S.takings, h='';
+  var t={orders:S.log.length,total:S.log.reduce(function(s,o){return s+o.total},0)}, h='';
   h+='<section class="set"><h3>Today</h3><div class="takings"><b>'+money(t.total)+'</b><span class="grow">'+t.orders+(t.orders===1?' order':' orders')+'</span>'+
      '<button class="btn sm ghost danger" type="button" data-act="resetToday">Reset today</button></div></section>';
   CATS.forEach(function(c){
@@ -781,6 +836,7 @@ document.addEventListener('click',function(e){
     case 'openOrder': $('#order').classList.add('open'); break;
     case 'closeOrder': $('#order').classList.remove('open'); break;
     case 'settings': openSettings(); break;
+    case 'history': openHistory(); break;
     case 'close': closeSheet(); break;
     case 'coff': toggle(C.off,t.dataset.v); renderCust(); break;
     case 'cadd': toggle(C.add,t.dataset.v); renderCust(); break;
@@ -791,7 +847,7 @@ document.addEventListener('click',function(e){
     case 'quick': payQuick(t.dataset.v); break;
     case 'complete': complete('cash'); break;
     case 'card': complete('card'); break;
-    case 'resetToday': arm(t,'Tap again to reset',function(){S.takings={date:todayStr(),orders:0,total:0};save();renderSettings();}); break;
+    case 'resetToday': arm(t,'Tap again to reset',function(){S.log=[];save();renderSettings();renderTotals();}); break;
     case 'resetMenu': arm(t,'Tap again to reset',function(){
       Object.keys(ITEM).forEach(function(k){var it=ITEM[k]; it.name=it.def.name; it.price=it.def.price; it.avail=true;});
       Object.keys(EX).forEach(function(k){var x=EX[k]; x.name=x.def.name; x.price=x.def.price;});
