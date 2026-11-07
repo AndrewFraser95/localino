@@ -371,7 +371,7 @@ var RAW=[
   ['affumicata','Affumicata',1125,0,'Tomato',['mozzarella','smoked cheese','pancetta','sun-dried tomatoes']],
   ['romana','Romana',1125,0,'Tomato',['mozzarella','mushrooms','sun-dried tomatoes']],
   ['napoletana','Napoletana',1125,0,'White',['mozzarella','cherry tomatoes','sausage','wild broccoli']],
-  ['itria',"La Valle d'Itria",1200,0,'Tomato',['mozzarella','fresh herbs','capocollo','ricotta','Parmesan']],
+  ['itria',"La Valle d'Itria",1125,0,'Tomato',['mozzarella','fresh herbs','capocollo','ricotta','Parmesan']],
   ['rustica','La Rustica',1200,0,'Tomato',['mozzarella','sausage','mushrooms','black truffle']],
   ['capricciosissima','Capricciosissima',1225,0,'Tomato',['mozzarella','salami','roast ham','artichokes','olives']]
  ]},
@@ -689,7 +689,7 @@ function renderPay(){
   else if(ok){cls='ok'; msg='Change <span class="num">'+money(g-tot)+'</span>';}
   else {cls='owe'; msg='<span class="num">'+money(tot-g)+'</span> still to pay';}
   var keys=['7','8','9','4','5','6','1','2','3','.','0','del'];
-  var amounts=[500,1000,2000,5000];
+  var amounts=[500,1000,2000,5000]; // notes add up when tapped more than once
   paintSheet(
     '<div class="shead"><h2>Payment</h2><p>Order '+S.n+(S.label?' · '+esc(S.label):'')+'</p></div>'+
     '<div class="sbody">'+
@@ -697,7 +697,7 @@ function renderPay(){
       '<div class="prow"><span>Given</span><b class="num">'+(P===''?'£0.00':'£'+esc(P))+'</b></div>'+
       '<div class="change '+cls+'">'+msg+'</div>'+
       '<div class="quick"><button class="btn" type="button" data-act="quick" data-v="exact">Exact</button>'+
-        amounts.map(function(a){return '<button class="btn" type="button" data-act="quick" data-v="'+a+'">£'+(a/100)+'</button>'}).join('')+'</div>'+
+        amounts.map(function(a){return '<button class="btn" type="button" data-act="quick" data-v="'+a+'">+£'+(a/100)+'</button>'}).join('')+'</div>'+
       '<div class="pad">'+keys.map(function(k){
         return '<button type="button" data-act="key" data-v="'+k+'"'+(k==='del'?' class="del" aria-label="Delete"':'')+'>'+(k==='del'?'Del':k)+'</button>';
       }).join('')+'</div>'+
@@ -722,7 +722,10 @@ function payKey(k){
   renderPay();
 }
 function payQuick(v){
-  P=(v==='exact'?total()/100:(+v)/100).toFixed(2); fresh=true; renderPay();
+  // Exact sets the amount; note buttons add up, so two £20s = £40
+  if(v==='exact') P=(total()/100).toFixed(2);
+  else P=(((given()||0)+(+v))/100).toFixed(2);
+  fresh=true; renderPay();
 }
 function complete(how){
   if(S.sheet!=='pay') return;
