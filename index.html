@@ -18,7 +18,7 @@ body{margin:0}
    On phones the order slides up as a sheet from a bar at the bottom. */
 :root{
   --bg:#EDEFE9; --surface:#FFFFFF; --fg:#16201B; --muted:#55625A; --line:#CDD4CB;
-  --accent:#1D6848; --accent-fg:#FFFFFF; --accent-text:#1D6848;
+  --accent:#1D6848; --accent-fg:#FFFFFF; --accent-text:#1D6848; --ch1:#0B8A54; --ch2:#B06F12;
   --danger:#B4301C; --danger-solid:#B4301C; --danger-bg:#F6DDD7;
   --ok-bg:#DAEEE1;
   --pizza-bg:#F8E2DA; --pizza-fg:#5A2012;
@@ -34,7 +34,7 @@ body{margin:0}
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --bg:#0F1511; --surface:#18201B; --fg:#E7EEE9; --muted:#A0ADA5; --line:#2D3932;
-    --accent:#3FA877; --accent-fg:#07130D; --accent-text:#6FD3A0;
+    --accent:#3FA877; --accent-fg:#07130D; --accent-text:#6FD3A0; --ch1:#3FA877; --ch2:#C47F1F;
     --danger:#FF9A85; --danger-solid:#C8422B; --danger-bg:#3A1F19;
     --ok-bg:#183024;
     --pizza-bg:#3B2019; --pizza-fg:#F6D9CF;
@@ -49,7 +49,7 @@ body{margin:0}
 }
 :root[data-theme="dark"]{
   --bg:#0F1511; --surface:#18201B; --fg:#E7EEE9; --muted:#A0ADA5; --line:#2D3932;
-  --accent:#3FA877; --accent-fg:#07130D; --accent-text:#6FD3A0;
+  --accent:#3FA877; --accent-fg:#07130D; --accent-text:#6FD3A0; --ch1:#3FA877; --ch2:#C47F1F;
   --danger:#FF9A85; --danger-solid:#C8422B; --danger-bg:#3A1F19;
   --ok-bg:#183024;
   --pizza-bg:#3B2019; --pizza-fg:#F6D9CF;
@@ -269,6 +269,41 @@ input{font:inherit;font-size:16px;color:inherit}
 .takings b{font-family:var(--font-num);font-size:22px}
 .takings .grow{margin-right:auto}
 
+/* Backup banner and dashboard */
+.top{display:grid;gap:8px}
+.banner{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--calz-bg);color:var(--calz-fg);border:1px solid var(--edge);border-radius:12px;padding:8px 12px}
+.banner span{flex:1;min-width:200px;font-weight:600}
+label.chip{cursor:pointer}
+.sheet.wide{width:min(820px,100%)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.kpi{background:var(--bg);border-radius:12px;padding:12px 14px;display:grid;gap:2px;min-width:0}
+.kpi span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.kpi b{font:600 26px var(--font-num)}
+.split{display:flex;gap:2px;height:22px;border-radius:6px;overflow:hidden}
+.split i{display:block;height:100%;min-width:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-weight:600}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend u{display:inline-block;width:12px;height:12px;border-radius:3px;text-decoration:none}
+.rank{display:grid;gap:8px}
+.rrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) auto;gap:10px;align-items:center}
+.rname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rbar{height:14px;background:var(--bg);border-radius:4px;overflow:hidden}
+.rbar i{display:block;height:100%;background:var(--ch1);border-radius:0 4px 4px 0}
+.rnum{font:600 14px var(--font-num);white-space:nowrap}
+.cols{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:18px;border-bottom:1px solid var(--line)}
+.col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.col i{display:block;width:100%;max-width:36px;background:var(--ch1);border-radius:4px 4px 0 0}
+.col .v{font:600 11px var(--font-num);color:var(--muted);margin-bottom:3px;white-space:nowrap}
+.clabels{display:flex;gap:4px}
+.clabels span{flex:1 1 0;min-width:0;text-align:center;font:500 11px var(--font-num);color:var(--muted);padding-top:4px;white-space:nowrap}
+
+/* Printer */
+.hbtns{flex-wrap:wrap;justify-content:flex-end}
+.pdot{width:10px;height:10px;border-radius:50%;background:var(--muted);flex:none;display:inline-block;margin-right:2px}
+.pdot.on{background:var(--accent-text)}
+.pstat{display:flex;align-items:center;gap:10px;font-size:17px}
+.warn{margin:0;background:var(--danger-bg);color:var(--danger);padding:10px 12px;border-radius:10px;font-weight:700}
+
 /* Orders today */
 .hsum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .hsum div{background:var(--bg);border-radius:12px;padding:10px 12px;display:grid;gap:2px;min-width:0}
@@ -283,6 +318,8 @@ input{font:inherit;font-size:16px;color:inherit}
 .hist .ht{font-family:var(--font-num);font-weight:500;color:var(--muted)}
 .hist .hl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .hist .tk{margin:0 12px 12px;font-size:16px}
+.chip:disabled{opacity:.4;cursor:not-allowed}
+.hnote{margin:8px 0 0;color:var(--muted);font-size:14px}
 
 .toast{
   position:fixed;z-index:60;left:50%;transform:translateX(-50%);
@@ -316,13 +353,18 @@ input{font:inherit;font-size:16px;color:inherit}
 <body>
 
 <div class="app">
+  <div class="top">
   <header class="bar">
     <div class="brand">Order till</div>
-    <div class="orow">
+    <div class="orow hbtns">
+      <button class="btn sm" data-act="printer" type="button"><span class="pdot" id="pdot"></span>Printer</button>
+      <button class="btn sm" data-act="dash" type="button">Dashboard</button>
       <button class="btn sm" data-act="history" type="button">Orders today <span class="tcount" id="hcount">0</span></button>
       <button class="btn sm" data-act="settings" type="button">Menu &amp; prices</button>
     </div>
   </header>
+  <div class="banner" id="banner" hidden></div>
+  </div>
   <div class="main">
     <section class="menu" aria-label="Menu">
       <div class="tabs" id="tabs" role="tablist"></div>
@@ -428,44 +470,128 @@ var todayStr=function(){return new Date().toLocaleDateString('en-CA')};
 var desc=function(){return ''}; // ingredients are not shown; staff know the menu
 
 /* ---------- State ---------- */
-var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr()};
+var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr(),print:{auto:false,width:80,name:''},lastExport:0,lastBackup:0};
 
+var DBN='localino-till', IDB=null, ORDKEYS={}, LSHAD=false, saveTimer=null, ST={idb:false,persisted:null,err:''};
+function validOrder(o){return !!(o&&typeof o.t==='number'&&typeof o.total==='number'&&Array.isArray(o.lines))}
+function applyMenu(d){
+  if(d.items) Object.keys(d.items).forEach(function(id){
+    var it=ITEM[id], v=d.items[id]; if(!it||!v) return;
+    if(typeof v.name==='string'&&v.name.trim()) it.name=v.name;
+    if(typeof v.price==='number'&&isFinite(v.price)&&v.price>=0) it.price=Math.round(v.price);
+    if(typeof v.avail==='boolean') it.avail=v.avail;
+  });
+  if(d.extras) Object.keys(d.extras).forEach(function(id){
+    var e=EX[id], v=d.extras[id]; if(!e||!v) return;
+    if(typeof v.name==='string'&&v.name.trim()) e.name=v.name;
+    if(typeof v.price==='number'&&isFinite(v.price)&&v.price>=0) e.price=Math.round(v.price);
+  });
+}
+function applyState(d){
+  applyMenu(d);
+  if(typeof d.n==='number'&&d.n>=1) S.n=Math.floor(d.n);
+  if(typeof d.label==='string') S.label=d.label.slice(0,40);
+  if(Array.isArray(d.lines)) S.lines=d.lines.filter(function(l){return l&&ITEM[l.id]&&l.qty>=1}).map(function(l){
+    return {id:l.id,qty:Math.floor(l.qty),off:Array.isArray(l.off)?l.off:[],add:(Array.isArray(l.add)?l.add:[]).filter(function(x){return EX[x]}),notes:Array.isArray(l.notes)?l.notes:[],text:typeof l.text==='string'?l.text:''};
+  });
+  if(typeof d.day==='string') S.day=d.day;
+  if(typeof d.lastExport==='number') S.lastExport=d.lastExport;
+  if(typeof d.lastBackup==='number') S.lastBackup=d.lastBackup;
+  if(d.print&&typeof d.print==='object') S.print={auto:!!d.print.auto,width:d.print.width===58?58:80,name:String(d.print.name||'')};
+}
+function stateObj(){
+  var items={}; Object.keys(ITEM).forEach(function(id){var it=ITEM[id]; items[id]={name:it.name,price:it.price,avail:it.avail}});
+  var extras={}; Object.keys(EX).forEach(function(id){var e=EX[id]; extras[id]={name:e.name,price:e.price}});
+  return {items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,print:S.print,lastExport:S.lastExport,lastBackup:S.lastBackup,savedAt:Date.now()};
+}
+// Every order is stored twice: IndexedDB (primary) and a localStorage copy. On start they are merged, so losing one does not lose orders.
 function load(){
-  try{
-    var raw=localStorage.getItem(KEY); if(!raw) return;
-    var d=JSON.parse(raw);
-    if(d.items) Object.keys(d.items).forEach(function(id){
-      var it=ITEM[id], v=d.items[id]; if(!it||!v) return;
-      if(typeof v.name==='string'&&v.name.trim()) it.name=v.name;
-      if(typeof v.price==='number'&&isFinite(v.price)&&v.price>=0) it.price=Math.round(v.price);
-      if(typeof v.avail==='boolean') it.avail=v.avail;
-    });
-    if(d.extras) Object.keys(d.extras).forEach(function(id){
-      var e=EX[id], v=d.extras[id]; if(!e||!v) return;
-      if(typeof v.name==='string'&&v.name.trim()) e.name=v.name;
-      if(typeof v.price==='number'&&isFinite(v.price)&&v.price>=0) e.price=Math.round(v.price);
-    });
-    if(typeof d.n==='number'&&d.n>=1) S.n=Math.floor(d.n);
-    if(typeof d.label==='string') S.label=d.label.slice(0,40);
-    if(Array.isArray(d.lines)) S.lines=d.lines.filter(function(l){return l&&ITEM[l.id]&&l.qty>=1}).map(function(l){
-      return {id:l.id,qty:Math.floor(l.qty),off:Array.isArray(l.off)?l.off:[],add:(Array.isArray(l.add)?l.add:[]).filter(function(x){return EX[x]}),notes:Array.isArray(l.notes)?l.notes:[],text:typeof l.text==='string'?l.text:''};
-    });
-    if(typeof d.day==='string') S.day=d.day;
-    if(Array.isArray(d.log)) S.log=d.log.filter(function(o){return o&&typeof o.total==='number'&&Array.isArray(o.lines)});
-  }catch(e){}
+  var d=null; try{d=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+  LSHAD=!!d;
+  if(d){
+    try{applyState(d)}catch(e){}
+    if(Array.isArray(d.log)) S.log=d.log.filter(validOrder);
+  }
   ensureTakings();
 }
-function save(){
+function persistNow(){
+  clearTimeout(saveTimer); saveTimer=null;
+  var st=stateObj();
+  try{ localStorage.setItem(KEY,JSON.stringify(Object.assign({},st,{log:S.log}))); }
+  catch(e){
+    try{ var cut=daysAgoStart(6); localStorage.setItem(KEY,JSON.stringify(Object.assign({},st,{log:S.log.filter(function(o){return o.t>=cut})}))); }catch(e2){}
+  }
+  if(IDB){
+    try{ var tx=IDB.transaction('meta','readwrite'); tx.objectStore('meta').put(st,'state'); tx.onerror=function(){ST.err='settings write failed'}; }
+    catch(e3){ST.err=String((e3&&e3.message)||e3)}
+  }
+}
+function save(){ if(!saveTimer) saveTimer=setTimeout(persistNow,250); }
+function syncOrders(){
+  if(!IDB) return;
   try{
-    var items={}; Object.keys(ITEM).forEach(function(id){var it=ITEM[id]; items[id]={name:it.name,price:it.price,avail:it.avail}});
-    var extras={}; Object.keys(EX).forEach(function(id){var e=EX[id]; extras[id]={name:e.name,price:e.price}});
-    localStorage.setItem(KEY,JSON.stringify({items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,log:S.log}));
+    var keys={}, tx=IDB.transaction('orders','readwrite'), os=tx.objectStore('orders');
+    S.log.forEach(function(o){keys[o.t]=1; if(!ORDKEYS[o.t]) os.put(o);});
+    Object.keys(ORDKEYS).forEach(function(k){ if(!keys[k]) os.delete(+k); });
+    tx.oncomplete=function(){ORDKEYS=keys};
+    tx.onerror=function(){ST.err='order write failed'};
+  }catch(e){ST.err=String((e&&e.message)||e)}
+}
+function idbOpen(){
+  return new Promise(function(res,rej){
+    try{
+      var r=indexedDB.open(DBN,1);
+      r.onupgradeneeded=function(){var db=r.result; db.createObjectStore('meta'); db.createObjectStore('orders',{keyPath:'t'});};
+      r.onsuccess=function(){res(r.result)};
+      r.onerror=function(){rej(r.error)};
+      r.onblocked=function(){rej(new Error('database blocked'))};
+    }catch(e){rej(e)}
+  });
+}
+function idbRead(store,fn){
+  return new Promise(function(res,rej){
+    var tx=IDB.transaction(store,'readonly'), r=fn(tx.objectStore(store));
+    tx.oncomplete=function(){res(r.result)};
+    tx.onerror=function(){rej(tx.error)};
+  });
+}
+async function loadIDB(){
+  try{
+    IDB=await idbOpen(); ST.idb=true;
+    IDB.onversionchange=function(){try{IDB.close()}catch(e){} IDB=null; ST.idb=false;};
+    var ids=await idbRead('meta',function(s){return s.get('state')});
+    var ords=((await idbRead('orders',function(s){return s.getAll()}))||[]).filter(validOrder);
+    ORDKEYS={}; ords.forEach(function(o){ORDKEYS[o.t]=1});
+    var restored=false;
+    if(!LSHAD&&ids){ applyState(ids); restored=true; }      // browser copy was wiped, database survived
+    var have={}; S.log.forEach(function(o){have[o.t]=1});
+    var added=0;
+    ords.forEach(function(o){ if(!have[o.t]){S.log.push(o); added++;} });
+    S.log.sort(function(a,b){return a.t-b.t});
+    ensureTakings();
+    syncOrders(); persistNow();
+    $('#label').value=S.label;
+    renderAll(); if(S.sheet==='history') renderHistory();
+    if(added>0||restored) toast('Recovered saved data'+(S.log.length?' ('+S.log.length+' orders)':''));
+  }catch(e){ IDB=null; ST.idb=false; ST.err=String((e&&e.message)||e); }
+  requestPersist(); updateBanner();
+}
+function requestPersist(){
+  try{
+    if(!(navigator.storage&&navigator.storage.persist&&navigator.storage.persisted)) return;
+    navigator.storage.persisted().then(function(p){
+      if(p){ST.persisted=true; return;}
+      return navigator.storage.persist().then(function(g){ST.persisted=!!g});
+    }).catch(function(){});
   }catch(e){}
 }
 function ensureTakings(){
-  // a new day starts a fresh log and order numbering
+  // a new day restarts ticket numbering; orders are kept for 30 days
   var t=todayStr();
-  if(S.day!==t){S.day=t;S.log=[];S.n=1;}
+  if(S.day!==t){S.day=t;S.n=1;}
+  var cut=daysAgoStart(RETAIN_DAYS-1), before=S.log.length;
+  S.log=S.log.filter(function(o){return o.t>=cut});
+  if(S.log.length!==before){syncOrders(); save();}
 }
 
 /* ---------- Order maths ---------- */
@@ -561,12 +687,12 @@ function renderTotals(){
   $('#total').textContent=money(t);
   $('#mtotal').textContent=money(t);
   $('#onum').textContent=S.n;
-  $('#hcount').textContent=S.log.length;
+  $('#hcount').textContent=todays().length;
   $('#mcount').textContent=n?('View order · '+n+(n===1?' item':' items')):'Order is empty';
   $('#btn-pay').disabled=!n;
   $('#btn-ticket').disabled=!n;
 }
-function renderAll(){renderTabs();renderItems();renderLines();renderTotals()}
+function renderAll(){renderTabs();renderItems();renderLines();renderTotals();updateBanner()}
 
 /* ---------- Sheets ---------- */
 function paintSheet(html,cls){
@@ -649,19 +775,21 @@ function ticketText(){
   });
   return {text:rows.join('\n'),drinks:drinks};
 }
-function openTicket(){
-  var t=ticketText();
+var TKT='', TKOBJ=null;
+function openTicket(t,warn,obj){
+  t=t||ticketText(); TKT=t.text; TKOBJ=obj||ticketObj();
   paintSheet(
     '<div class="shead"><h2>Chef ticket</h2><p>Copy this onto the post-it.</p></div>'+
-    '<div class="sbody"><pre class="tk" id="tk">'+esc(t.text)+'</pre>'+
+    '<div class="sbody">'+(warn?'<p class="warn">'+esc(warn)+'</p>':'')+'<pre class="tk" id="tk">'+esc(t.text)+'</pre>'+
       (t.drinks.length?'<p class="tkdrinks">Drinks, not for the kitchen: '+esc(t.drinks.join(', '))+'</p>':'')+'</div>'+
     '<div class="sfoot"><button class="btn" type="button" data-act="copy">Copy text</button>'+
+      (hasBT?'<button class="btn" type="button" data-act="printnow">Print</button>':'')+
       '<button class="btn primary" type="button" data-act="close">Close</button></div>'
   );
   openSheet('ticket');
 }
 function copyTicket(){
-  var t=ticketText().text;
+  var t=TKT;
   function fallback(){
     var pre=$('#tk'); if(!pre) return;
     var r=document.createRange(); r.selectNodeContents(pre);
@@ -737,23 +865,166 @@ function complete(how){
   ensureTakings();
   S.log.push({n:S.n,t:Date.now(),label:S.label,total:tot,how:how==='cash'?'cash':'card',given:how==='cash'?g:null,
     lines:S.lines.map(function(l){var it=ITEM[l.id];return {q:l.qty,name:it.name,mods:mods(l).map(function(x){return x.t}),amt:lineUnit(l)*l.qty}})});
+  var tk=ticketObj(), ttx=ticketText();
   S.n++; S.lines=[]; S.label=''; $('#label').value='';
   closeSheet(); $('#order').classList.remove('open');
-  renderAll(); save(); toast(msg);
+  renderAll(); persistNow(); syncOrders(); toast(msg);
+  // chef ticket prints by itself; if it can't, show it on screen to write out by hand
+  if(S.print.auto&&tk.items.length) printTicket(tk).then(function(ok){
+    if(ok) toast(msg+' · ticket printed');
+    else openTicket(ttx,'Could not print ('+PR.err+'). Copy this onto a post-it instead.',tk);
+  });
 }
 
-/* ---- Orders today ---- */
+/* ---- Orders (kept 30 days) and CSV export ---- */
+var RETAIN_DAYS=30, HD='';
 function hhmm(ms){return new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}
-function openHistory(){renderHistory(); openSheet('history')}
+function dayOf(ms){return new Date(ms).toLocaleDateString('en-CA')}
+function daysAgoStart(n){var d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-n); return d.getTime()}
+function todays(){var t=todayStr(); return S.log.filter(function(o){return dayOf(o.t)===t})}
+function daysWithOrders(){
+  var m={}, t=todayStr();
+  S.log.forEach(function(o){var d=dayOf(o.t); if(!m[d]) m[d]={n:0,total:0}; m[d].n++; m[d].total+=o.total;});
+  if(!m[t]) m[t]={n:0,total:0};
+  return Object.keys(m).sort().reverse().map(function(d){return {d:d,n:m[d].n,total:m[d].total}});
+}
+function dayName(d){
+  if(d===todayStr()) return 'Today';
+  if(d===dayOf(daysAgoStart(1))) return 'Yesterday';
+  return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+}
+function rangeOrders(kind){
+  if(kind==='today') return S.log.filter(function(o){return o.t>=daysAgoStart(0)});
+  if(kind==='week') return S.log.filter(function(o){return o.t>=daysAgoStart(6)});
+  if(kind==='last') return S.lastExport?S.log.filter(function(o){return o.t>S.lastExport}):[];
+  return S.log.slice();
+}
+function csvCell(v){
+  var s=String(v==null?'':v);
+  if(/^[=+\-@\t\r]/.test(s)) s="'"+s;               // stop Excel treating typed text as a formula
+  return /[",\r\n]/.test(s)||s!==s.trim()?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function buildCsv(L){
+  var rows=[['Date','Time','Order no','Name / table','Items','Item count','Total (£)','Payment','Cash given (£)','Change (£)']];
+  L.forEach(function(o){
+    var items=o.lines.map(function(l){return l.q+'x '+l.name+(l.mods&&l.mods.length?' ('+l.mods.join(', ')+')':'')}).join('; ');
+    var cnt=o.lines.reduce(function(s,l){return s+l.q},0);
+    var cash=o.how==='cash'&&o.given!=null;
+    rows.push([dayOf(o.t),hhmm(o.t),o.n,o.label||'',items,cnt,(o.total/100).toFixed(2),o.how==='cash'?'Cash':'Card',cash?(o.given/100).toFixed(2):'',cash?((o.given-o.total)/100).toFixed(2):'']);
+  });
+  return rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n')+'\r\n';
+}
+function downloadCsv(name,text){
+  var blob=new Blob(['﻿'+text],{type:'text/csv;charset=utf-8'});   // BOM so Excel shows £ correctly
+  var url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){document.body.removeChild(a); URL.revokeObjectURL(url)},1500);
+}
+function exportOrders(kind){
+  var L=rangeOrders(kind).sort(function(a,b){return a.t-b.t});
+  if(!L.length){toast('No orders in that range'); return;}
+  downloadCsv('localino-orders_'+dayOf(L[0].t)+'_to_'+dayOf(L[L.length-1].t)+'.csv',buildCsv(L));
+  S.lastExport=Date.now(); save();
+  toast('Exported '+L.length+(L.length===1?' order':' orders'));
+  if(S.sheet==='history') renderHistory();
+}
+var BANNER_OFF=false, RB=null;
+function unbacked(){var b=S.lastBackup||0; return S.log.filter(function(o){return o.t>b}).length}
+function updateBanner(){
+  var el=$('#banner'); if(!el) return;
+  var n=unbacked(), show=false;
+  if(n>0&&!BANNER_OFF){
+    if(S.lastBackup) show=(Date.now()-S.lastBackup)>=7*86400000;
+    else show=S.log.some(function(o){return o.t<daysAgoStart(2)});
+  }
+  el.hidden=!show;
+  if(show) el.innerHTML='<span><b>Back up your orders.</b> '+n+(n===1?' order is':' orders are')+' only saved on this device'+
+    (S.lastBackup?' (last backup '+esc(new Date(S.lastBackup).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))+').':', and there is no backup yet.')+'</span>'+
+    '<button class="btn sm" type="button" data-act="backup">Back up now</button><button class="btn sm ghost" type="button" data-act="bannerOff">Later</button>';
+}
+function backupObj(){return {app:'localino-till',version:1,exportedAt:new Date().toISOString(),state:stateObj(),orders:S.log.slice()}}
+function markBackedUp(){S.lastBackup=Date.now(); persistNow(); updateBanner(); if(S.sheet==='history') renderHistory();}
+function downloadBackup(){
+  var blob=new Blob([JSON.stringify(backupObj())],{type:'application/json'}), url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='localino-backup_'+todayStr()+'.json'; document.body.appendChild(a); a.click();
+  setTimeout(function(){document.body.removeChild(a); URL.revokeObjectURL(url)},1500);
+  markBackedUp(); toast('Backup saved · '+S.log.length+' orders');
+}
+function shareBackup(){
+  var f; try{ f=new File([JSON.stringify(backupObj())],'localino-backup_'+todayStr()+'.json',{type:'application/json'}); }catch(e){ downloadBackup(); return; }
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    navigator.share({files:[f],title:'Till backup '+todayStr()}).then(function(){markBackedUp(); toast('Backup shared')}).catch(function(e){ if(!e||e.name!=='AbortError') downloadBackup(); });
+  } else downloadBackup();
+}
+function restoreFile(el){
+  var f=el.files&&el.files[0]; el.value=''; if(!f) return;
+  var rd=new FileReader();
+  rd.onload=function(){
+    try{
+      var b=JSON.parse(rd.result);
+      if(!b||b.app!=='localino-till'||!Array.isArray(b.orders)) throw new Error('not a till backup');
+      var have={}, cut=daysAgoStart(RETAIN_DAYS-1); S.log.forEach(function(o){have[o.t]=1});
+      var incoming=b.orders.filter(validOrder);
+      RB={b:b,incoming:incoming,fresh:incoming.filter(function(o){return !have[o.t]&&o.t>=cut})};
+      renderRestore(); openSheet('restore');
+    }catch(e){ toast('That file is not a till backup'); }
+  };
+  rd.onerror=function(){toast('Could not read that file')};
+  rd.readAsText(f);
+}
+function renderRestore(){
+  var when=RB.b.exportedAt?new Date(RB.b.exportedAt).toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'unknown date';
+  paintSheet(
+    '<div class="shead"><h2>Restore backup</h2><p>Backup from '+esc(when)+'</p></div>'+
+    '<div class="sbody"><p style="margin:0">This backup holds <b>'+RB.incoming.length+'</b> orders. <b>'+RB.fresh.length+'</b> are not on this device yet and will be added. Nothing on this device is deleted. Orders older than 30 days are skipped.</p></div>'+
+    '<div class="sfoot"><button class="btn grow" type="button" data-act="close">Cancel</button>'+
+      '<button class="btn" type="button" data-act="restoreOrders">Add orders</button>'+
+      (RB.b.state?'<button class="btn primary" type="button" data-act="restoreAll">Add orders and menu</button>':'')+'</div>',
+    'narrow'
+  );
+}
+function doRestore(withMenu){
+  if(!RB) return;
+  RB.fresh.forEach(function(o){S.log.push(o)});
+  S.log.sort(function(a,b){return a.t-b.t});
+  if(withMenu&&RB.b.state) applyMenu(RB.b.state);
+  var n=RB.fresh.length; RB=null;
+  ensureTakings(); persistNow(); syncOrders(); closeSheet(); renderAll(); toast('Restored '+n+(n===1?' order':' orders'));
+}
+function dataBlock(){
+  var nb=unbacked();
+  var txt='Orders are saved twice on this device (a database and a second copy)'+(ST.idb?'':'. The database is unavailable here, so only the second copy is in use')+
+    '. Protected from the browser clearing it: '+(ST.persisted===true?'yes':ST.persisted===false?'not granted':'unknown')+
+    '. '+(S.lastBackup?'Last backup '+esc(new Date(S.lastBackup).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}))+', ':'No backup yet, ')+nb+(nb===1?' order':' orders')+' not backed up.';
+  return '<div><h3>Data &amp; backup</h3><p class="hnote" style="margin:0 0 8px">'+txt+'</p><div class="chips">'+
+    '<button class="chip" type="button" data-act="backup">Download backup</button>'+
+    (navigator.share?'<button class="chip" type="button" data-act="shareBackup">Share backup</button>':'')+
+    '<label class="chip" for="restorefile">Restore from backup</label>'+
+    '<input type="file" id="restorefile" data-k="restore" accept=".json,application/json" hidden></div></div>';
+}
+function openHistory(){HD=todayStr(); renderHistory(); openSheet('history')}
 function renderHistory(){
   ensureTakings();
-  var L=S.log, tot=0, cash=0, card=0;
+  var days=daysWithOrders();
+  if(!HD||!days.some(function(x){return x.d===HD})) HD=todayStr();
+  var L=S.log.filter(function(o){return dayOf(o.t)===HD}), tot=0, cash=0, card=0;
   L.forEach(function(o){tot+=o.total; if(o.how==='cash') cash+=o.total; else card+=o.total;});
-  var h='<div class="hsum"><div><span>Orders</span><b>'+L.length+'</b></div>'+
+  var cnt={today:rangeOrders('today').length,last:rangeOrders('last').length,week:rangeOrders('week').length,all:S.log.length};
+  var ex=[['today','Today'],['last','Since last export'],['week','Last 7 days'],['all','All kept (30 days)']];
+  var h='<select class="in" id="hday" data-k="hday" aria-label="Choose a day">'+days.map(function(x){
+    return '<option value="'+x.d+'"'+(x.d===HD?' selected':'')+'>'+esc(dayName(x.d))+' · '+x.n+(x.n===1?' order':' orders')+' · '+money(x.total)+'</option>';
+  }).join('')+'</select>';
+  h+='<div class="hsum"><div><span>Orders</span><b>'+L.length+'</b></div>'+
     '<div><span>Takings</span><b>'+money(tot)+'</b></div>'+
     '<div><span>Cash / card</span><b class="sm">'+money(cash)+' / '+money(card)+'</b></div></div>';
+  h+='<div><h3>Export to Excel (CSV)</h3><div class="chips">'+ex.map(function(e){
+    var n=cnt[e[0]];
+    return '<button class="chip" type="button" data-act="export" data-v="'+e[0]+'"'+(n?'':' disabled')+'>'+e[1]+' <i>'+n+'</i></button>';
+  }).join('')+'</div><p class="hnote">'+(S.lastExport?'Last export: '+esc(new Date(S.lastExport).toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})):'No export yet.')+
+    ' Orders are kept for 30 days.</p></div>';
+  h+=dataBlock();
   if(!L.length){
-    h+='<div class="empty"><b>No orders yet today</b><span>Each completed order is listed here with the time it went through.</span></div>';
+    h+='<div class="empty"><b>No orders on this day</b><span>Each completed order is listed here with the time it went through.</span></div>';
   } else {
     h+='<div class="hist">'+L.slice().reverse().map(function(o){
       var tx=['ORDER '+o.n+(o.label?'   '+o.label.toUpperCase():'')];
@@ -768,9 +1039,81 @@ function renderHistory(){
     }).join('')+'</div>';
   }
   paintSheet(
-    '<div class="shead"><h2>Orders today</h2><p>Tap an order to see its ticket. Saved on this device and cleared automatically each new day.</p></div>'+
+    '<div class="shead"><h2>Orders</h2><p>Pick a day, tap an order to see its ticket.</p></div>'+
     '<div class="sbody">'+h+'</div>'+
     '<div class="sfoot"><button class="btn primary" type="button" data-act="close">Close</button></div>'
+  );
+}
+
+/* ---- Dashboard ---- */
+var DR='week';
+var money0=function(p){return '£'+Math.round(p/100)};
+function dashOrders(){return rangeOrders(DR==='today'?'today':DR==='week'?'week':'all')}
+function openDash(){DR='week'; renderDash(); openSheet('dash')}
+function colChart(cols,allVals){
+  var max=Math.max.apply(null,cols.map(function(c){return c.val}).concat([1]));
+  var peak=0; cols.forEach(function(c,i){if(c.val>cols[peak].val) peak=i});
+  return '<div class="cols">'+cols.map(function(c,i){
+    var px=c.val>0?Math.max(3,Math.round(c.val/max*112)):0;
+    var showV=c.val>0&&(allVals||i===peak);
+    return '<div class="col" title="'+esc(c.tip)+'" aria-label="'+esc(c.tip)+'">'+(showV?'<span class="v">'+money0(c.val)+'</span>':'')+'<i style="height:'+px+'px"></i></div>';
+  }).join('')+'</div><div class="clabels">'+cols.map(function(c){return '<span>'+esc(c.label)+'</span>'}).join('')+'</div>';
+}
+function renderDash(){
+  ensureTakings();
+  var L=dashOrders(), tot=0, cash=0, card=0, items=0, byItem={}, byHour={}, byDay={};
+  L.forEach(function(o){
+    tot+=o.total; if(o.how==='cash') cash+=o.total; else card+=o.total;
+    var hr=new Date(o.t).getHours(), d=dayOf(o.t);
+    var bh=byHour[hr]||(byHour[hr]={amt:0,n:0}); bh.amt+=o.total; bh.n++;
+    var bd=byDay[d]||(byDay[d]={amt:0,n:0}); bd.amt+=o.total; bd.n++;
+    o.lines.forEach(function(l){items+=l.q; var b=byItem[l.name]||(byItem[l.name]={q:0,amt:0}); b.q+=l.q; b.amt+=l.amt;});
+  });
+  var n=L.length, h='';
+  h+='<div class="chips">'+[['today','Today'],['week','Last 7 days'],['all','Last 30 days']].map(function(r){
+    return '<button class="chip" type="button" data-act="dashrange" data-v="'+r[0]+'" aria-pressed="'+(DR===r[0])+'">'+r[1]+'</button>';
+  }).join('')+'</div>';
+  if(!n){
+    h+='<div class="empty"><b>No orders in this range yet</b><span>Figures appear here as orders are completed.</span></div>';
+  } else {
+    h+='<div class="kpis"><div class="kpi"><span>Takings</span><b>'+money(tot)+'</b></div>'+
+      '<div class="kpi"><span>Orders</span><b>'+n+'</b></div>'+
+      '<div class="kpi"><span>Average order</span><b>'+money(Math.round(tot/n))+'</b></div>'+
+      '<div class="kpi"><span>Items sold</span><b>'+items+'</b></div></div>';
+    var pc=Math.round(cash/tot*100), pk=100-pc;
+    h+='<div><h3>Cash and card</h3><div class="split" role="img" aria-label="Cash '+pc+' percent, card '+pk+' percent">'+
+      (cash?'<i style="flex:'+cash+';background:var(--ch1)"></i>':'')+(card?'<i style="flex:'+card+';background:var(--ch2)"></i>':'')+'</div>'+
+      '<div class="legend"><span><u style="background:var(--ch1)"></u>Cash '+money(cash)+' · '+pc+'%</span><span><u style="background:var(--ch2)"></u>Card '+money(card)+' · '+pk+'%</span></div></div>';
+    var top=Object.keys(byItem).map(function(k){return {name:k,q:byItem[k].q,amt:byItem[k].amt}}).sort(function(a,b){return b.q-a.q||b.amt-a.amt}).slice(0,8);
+    var mq=top[0].q;
+    h+='<div><h3>Best sellers</h3><div class="rank">'+top.map(function(t){
+      return '<div class="rrow"><span class="rname" title="'+esc(t.name)+'">'+esc(t.name)+'</span><span class="rbar"><i style="width:'+Math.max(2,Math.round(t.q/mq*100))+'%"></i></span><span class="rnum">'+t.q+' · '+money(t.amt)+'</span></div>';
+    }).join('')+'</div></div>';
+    var hrs=Object.keys(byHour).map(Number), hmin=Math.min.apply(null,hrs), hmax=Math.max.apply(null,hrs), cols=[], busy=hmin;
+    for(var x=hmin;x<=hmax;x++){
+      var bh=byHour[x]||{amt:0,n:0}; if(bh.n>(byHour[busy]||{n:0}).n) busy=x;
+      cols.push({label:String(x),val:bh.amt,tip:x+':00 to '+(x+1)+':00 · '+bh.n+(bh.n===1?' order':' orders')+' · '+money(bh.amt)});
+    }
+    h+='<div><h3>Takings by hour</h3>'+colChart(cols,cols.length<=12)+'</div>';
+    var note='Busiest hour: '+busy+':00 to '+(busy+1)+':00 ('+byHour[busy].n+(byHour[busy].n===1?' order':' orders')+').';
+    if(DR!=='today'){
+      var days=DR==='week'?7:RETAIN_DAYS, dcols=[], best=null;
+      for(var i=days-1;i>=0;i--){
+        var key=dayOf(daysAgoStart(i)), bd2=byDay[key]||{amt:0,n:0}, idx=days-1-i;
+        if(!best||bd2.amt>byDay[best].amt) best=bd2.amt>0?key:best;
+        var dt=new Date(key+'T12:00:00');
+        dcols.push({label:DR==='week'?dt.toLocaleDateString('en-GB',{weekday:'short'}):((i%5===0)?String(dt.getDate()):''),val:bd2.amt,tip:dayName(key)+' · '+bd2.n+(bd2.n===1?' order':' orders')+' · '+money(bd2.amt)});
+      }
+      h+='<div><h3>Takings by day</h3>'+colChart(dcols,DR==='week')+'</div>';
+      if(best) note+=' Best day: '+dayName(best)+' ('+money(byDay[best].amt)+').';
+    }
+    h+='<p class="hnote" style="margin:0">'+esc(note)+'</p>';
+  }
+  paintSheet(
+    '<div class="shead"><h2>Dashboard</h2><p>From the orders saved on this device (last 30 days).</p></div>'+
+    '<div class="sbody">'+h+'</div>'+
+    '<div class="sfoot"><button class="btn primary" type="button" data-act="close">Close</button></div>',
+    'wide'
   );
 }
 
@@ -778,7 +1121,7 @@ function renderHistory(){
 function openSettings(){renderSettings(); openSheet('settings')}
 function renderSettings(){
   ensureTakings();
-  var t={orders:S.log.length,total:S.log.reduce(function(s,o){return s+o.total},0)}, h='';
+  var tl=todays(), t={orders:tl.length,total:tl.reduce(function(s,o){return s+o.total},0)}, h='';
   h+='<section class="set"><h3>Today</h3><div class="takings"><b>'+money(t.total)+'</b><span class="grow">'+t.orders+(t.orders===1?' order':' orders')+'</span>'+
      '<button class="btn sm ghost danger" type="button" data-act="resetToday">Reset today</button></div></section>';
   CATS.forEach(function(c){
@@ -808,6 +1151,9 @@ function onFormInput(e){
   if(el.id==='label'){S.label=el.value; save(); return;}
   if(el.id==='ctext'&&C){C.text=el.value; return;}
   var k=el.dataset&&el.dataset.k; if(!k) return;
+  if(k==='prauto'){S.print.auto=el.checked; save(); return;}
+  if(k==='hday'){HD=el.value; renderHistory(); return;}
+  if(k==='restore'){restoreFile(el); return;}
   var id=el.dataset.id, it=ITEM[id], ex=EX[id], v;
   if(k==='name'&&it){ if(el.value.trim()) it.name=el.value; }
   else if(k==='price'&&it){ v=parseFloat(el.value.replace(',','.')); if(isFinite(v)&&v>=0) it.price=Math.round(v*100); if(e.type==='change') el.value=(it.price/100).toFixed(2); }
@@ -815,6 +1161,136 @@ function onFormInput(e){
   else if(k==='xname'&&ex){ if(el.value.trim()) ex.name=el.value; }
   else if(k==='xprice'&&ex){ v=parseFloat(el.value.replace(',','.')); if(isFinite(v)&&v>=0) ex.price=Math.round(v*100); if(e.type==='change') el.value=(ex.price/100).toFixed(2); }
   save(); renderAll();
+}
+
+/* ---------- Bluetooth printer (ESC/POS over Web Bluetooth, chef ticket only) ---------- */
+var hasBT=!!(navigator&&navigator.bluetooth);
+var PR={dev:null,chr:null,err:'',q:Promise.resolve()};
+var BT_SERVICES=[0x18f0,0xffe0,0xff00,0xfff0,0xfee7,'49535343-fe7d-4ae5-8fa9-9fafd205e455','e7810a71-73ae-499d-8c15-faa9aef0c3f2'];
+var sleep=function(ms){return new Promise(function(r){setTimeout(r,ms)})};
+function prConnected(){return !!(PR.dev&&PR.dev.gatt&&PR.dev.gatt.connected&&PR.chr)}
+function prDot(){var d=$('#pdot'); if(d) d.className='pdot'+(prConnected()?' on':'')}
+async function prFindChar(server){
+  var svcs=await server.getPrimaryServices();
+  for(var i=0;i<svcs.length;i++){
+    var cs=await svcs[i].getCharacteristics();
+    for(var j=0;j<cs.length;j++){var p=cs[j].properties; if(p.write||p.writeWithoutResponse) return cs[j];}
+  }
+  return null;
+}
+function prDrop(){PR.chr=null; prDot(); if(S.sheet==='printer') renderPrinter();}
+async function prAttach(dev){
+  PR.dev=dev;
+  var server=await dev.gatt.connect();
+  var c=await prFindChar(server);
+  if(!c) throw new Error('Connected, but no Bluetooth Low Energy print service was found. This printer may only support Classic Bluetooth.');
+  PR.chr=c;
+  dev.removeEventListener('gattserverdisconnected',prDrop);
+  dev.addEventListener('gattserverdisconnected',prDrop);
+  prDot();
+}
+async function prPair(){
+  PR.err='';
+  var dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:BT_SERVICES});
+  await prAttach(dev);
+}
+async function prEnsure(){
+  if(prConnected()) return;
+  if(!PR.dev) throw new Error('printer not connected');
+  await prAttach(PR.dev);
+}
+async function prWrite(bytes){
+  var pos=0,size=100;
+  var nr=PR.chr.properties.writeWithoutResponse&&typeof PR.chr.writeValueWithoutResponse==='function';
+  while(pos<bytes.length){
+    var chunk=bytes.slice(pos,pos+size);
+    try{
+      if(nr) await PR.chr.writeValueWithoutResponse(chunk); else await PR.chr.writeValue(chunk);
+      pos+=size;
+    }catch(e){
+      if(size>20){size=20; continue;}
+      throw e;
+    }
+    await sleep(25);
+  }
+}
+function ascii(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/×/g,'x').replace(/[^\x20-\x7e]/g,'?')}
+function wrap(s,n){
+  var out=[],line='';
+  s.split(' ').forEach(function(w){
+    while(w.length>n){ if(line){out.push(line);line='';} out.push(w.slice(0,n)); w=w.slice(n); }
+    if(!line) line=w; else if((line+' '+w).length<=n) line+=' '+w; else {out.push(line);line=w;}
+  });
+  if(line) out.push(line);
+  return out;
+}
+function ticketObj(){
+  return {n:S.n,label:S.label,time:hhmm(Date.now()),
+    items:S.lines.filter(function(l){return CATOF[ITEM[l.id].cat].kitchen}).map(function(l){
+      return {q:l.qty,name:ITEM[l.id].name,mods:mods(l).map(function(x){return x.t})};
+    })};
+}
+function escpos(t){
+  var W=S.print.width===58?32:48, b=[];
+  function raw(){for(var i=0;i<arguments.length;i++) b.push(arguments[i]);}
+  function line(s){s=ascii(s); for(var i=0;i<s.length;i++) b.push(s.charCodeAt(i)); b.push(10);}
+  raw(0x1b,0x40);                                   // initialise
+  raw(0x1b,0x61,1); raw(0x1d,0x21,0x11); line('ORDER '+t.n); raw(0x1d,0x21,0x00); // centred, double size
+  if(t.label){ raw(0x1b,0x21,0x18); wrap(t.label.toUpperCase(),W).forEach(line); raw(0x1b,0x21,0x00); }
+  line(t.time);
+  raw(0x1b,0x61,0);                                 // left aligned
+  line('-'.repeat(W));
+  t.items.forEach(function(it){
+    raw(0x1b,0x21,0x18);                            // bold, double height
+    wrap(it.q+'x '+it.name.toUpperCase(),W).forEach(line);
+    raw(0x1b,0x21,0x08);                            // bold
+    it.mods.forEach(function(m){wrap(m.toUpperCase(),W-3).forEach(function(l){line('   '+l)})});
+    raw(0x1b,0x21,0x00);
+    line('');
+  });
+  line('-'.repeat(W));
+  raw(10,10,10);
+  raw(0x1d,0x56,0x42,0x00);                         // feed and cut (ignored if no cutter)
+  return new Uint8Array(b);
+}
+function printTicket(t){
+  var run=async function(){
+    try{ await prEnsure(); await prWrite(escpos(t)); PR.err=''; return true; }
+    catch(e){ PR.err=String((e&&e.message)||e); prDot(); return false; }
+  };
+  PR.q=PR.q.then(run,run);
+  return PR.q;
+}
+function openPrinter(){renderPrinter(); openSheet('printer')}
+function renderPrinter(){
+  var h='';
+  if(!hasBT){
+    h='<p class="warn">This browser cannot use Bluetooth printers. Use Chrome or Edge on Android or Windows. iPhone and iPad cannot.</p>';
+  } else {
+    var on=prConnected();
+    h='<div class="pstat"><span class="pdot'+(on?' on':'')+'"></span><b>'+(on?'Connected to '+esc(PR.dev.name||'printer'):(PR.dev?'Paired, not connected right now':'No printer connected'))+'</b></div>'+
+      (PR.err?'<p class="warn">'+esc(PR.err)+'</p>':'')+
+      '<div class="chips"><button class="btn primary" data-act="prpair" type="button">'+(PR.dev?'Choose another printer':'Connect printer')+'</button>'+
+      '<button class="btn" data-act="prtest" type="button"'+(PR.dev?'':' disabled')+'>Test print</button>'+
+      (PR.dev?'<button class="btn ghost" data-act="prdisc" type="button">Disconnect</button>':'')+'</div>'+
+      '<div><h3>Paper width</h3><div class="chips">'+[58,80].map(function(w){
+        return '<button class="chip" type="button" data-act="prwidth" data-v="'+w+'" aria-pressed="'+(S.print.width===w)+'">'+w+' mm</button>';
+      }).join('')+'</div></div>'+
+      '<label class="sw"><input type="checkbox" id="prauto" data-k="prauto"'+(S.print.auto?' checked':'')+'>Print the chef ticket automatically when an order is completed</label>';
+  }
+  paintSheet(
+    '<div class="shead"><h2>Receipt printer</h2><p>Bluetooth. Prints chef tickets only, no customer receipt.</p></div>'+
+    '<div class="sbody">'+h+'</div>'+
+    '<div class="sfoot"><button class="btn primary" type="button" data-act="close">Done</button></div>'
+  );
+}
+function prInit(){
+  prDot();
+  if(!hasBT||!navigator.bluetooth.getDevices||!S.print.name) return;
+  navigator.bluetooth.getDevices().then(function(ds){
+    var d=ds.filter(function(x){return x.name===S.print.name})[0]; if(!d) return;
+    PR.dev=d; prAttach(d).then(prDot,prDot);
+  }).catch(function(){});
 }
 
 /* ---------- Events ---------- */
@@ -840,6 +1316,37 @@ document.addEventListener('click',function(e){
     case 'closeOrder': $('#order').classList.remove('open'); break;
     case 'settings': openSettings(); break;
     case 'history': openHistory(); break;
+    case 'export': exportOrders(t.dataset.v); break;
+    case 'dash': openDash(); break;
+    case 'dashrange': DR=t.dataset.v; renderDash(); break;
+    case 'backup': downloadBackup(); break;
+    case 'shareBackup': shareBackup(); break;
+    case 'bannerOff': BANNER_OFF=true; updateBanner(); break;
+    case 'restoreOrders': doRestore(false); break;
+    case 'restoreAll': doRestore(true); break;
+    case 'printer': openPrinter(); break;
+    case 'prpair':
+      prPair().then(function(){
+        S.print.auto=true; S.print.name=PR.dev.name||''; save(); prDot(); toast('Printer connected');
+        if(S.sheet==='printer') renderPrinter();
+      }).catch(function(e){
+        if(!(e&&e.name==='NotFoundError')) PR.err=String((e&&e.message)||e);
+        prDot(); if(S.sheet==='printer') renderPrinter();
+      });
+      break;
+    case 'prtest':
+      printTicket({n:'TEST',label:'',time:hhmm(Date.now()),items:[{q:1,name:'Test print',mods:['Printer is working']}]}).then(function(ok){
+        toast(ok?'Test ticket sent':'Could not print: '+PR.err); if(S.sheet==='printer') renderPrinter();
+      });
+      break;
+    case 'prdisc':
+      try{PR.dev.gatt.disconnect()}catch(x){}
+      PR.dev=null; PR.chr=null; PR.err=''; S.print.auto=false; S.print.name=''; save(); prDot(); renderPrinter();
+      break;
+    case 'prwidth': S.print.width=+t.dataset.v===58?58:80; save(); renderPrinter(); break;
+    case 'printnow':
+      printTicket(TKOBJ).then(function(ok){toast(ok?'Sent to printer':'Could not print: '+PR.err)});
+      break;
     case 'close': closeSheet(); break;
     case 'coff': toggle(C.off,t.dataset.v); renderCust(); break;
     case 'cadd': toggle(C.add,t.dataset.v); renderCust(); break;
@@ -850,7 +1357,7 @@ document.addEventListener('click',function(e){
     case 'quick': payQuick(t.dataset.v); break;
     case 'complete': complete('cash'); break;
     case 'card': complete('card'); break;
-    case 'resetToday': arm(t,'Tap again to reset',function(){S.log=[];save();renderSettings();renderTotals();}); break;
+    case 'resetToday': arm(t,'Tap again to reset',function(){var td=todayStr();S.log=S.log.filter(function(o){return dayOf(o.t)!==td});persistNow();syncOrders();renderSettings();renderTotals();}); break;
     case 'resetMenu': arm(t,'Tap again to reset',function(){
       Object.keys(ITEM).forEach(function(k){var it=ITEM[k]; it.name=it.def.name; it.price=it.def.price; it.avail=true;});
       Object.keys(EX).forEach(function(k){var x=EX[k]; x.name=x.def.name; x.price=x.def.price;});
@@ -876,6 +1383,11 @@ document.addEventListener('keydown',function(e){
 load();
 $('#label').value=S.label;
 renderAll();
+prInit();
+loadIDB();
+// write anything pending when the page is hidden or closed
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden') persistNow()});
+if(window.addEventListener) window.addEventListener('pagehide',persistNow);
 })();
 </script>
 
