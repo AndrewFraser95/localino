@@ -1,0 +1,43 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Accounts allowed to change the menu and read all orders.
+    // Replace the first address with your own Google account.
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          'YOUR_EMAIL@gmail.com',
+          'annmariebpalmisano@gmail.com'
+        ];
+    }
+
+    // Everyone's till can read the menu; only the owners can change it.
+    match /menu/{doc} { allow read: if true; allow write: if isOwner(); }
+
+    // Every saved version of the menu, for recovery.
+    match /menuHistory/{doc} { allow read, write: if isOwner(); }
+
+    // Orders. Each tablet signs in anonymously and can only ADD orders.
+    // Only the owners can read, correct or delete them.
+    function validOrder(d) {
+      return d.keys().hasOnly(['n','t','label','total','how','given','lines','dev','tab'])
+        && d.keys().hasAll(['t','total','how','lines','dev'])
+        && d.t is number
+        && d.total is number && d.total >= 0 && d.total < 10000000
+        && d.how in ['cash','card']
+        && d.lines is list && d.lines.size() <= 100
+        && d.dev is string && d.dev.size() <= 40
+        && (!('label' in d) || (d.label is string && d.label.size() <= 60))
+        && (!('tab' in d) || (d.tab is string && d.tab.size() <= 40));
+    }
+    match /orders/{id} {
+      allow read: if isOwner();
+      allow create: if request.auth != null && validOrder(request.resource.data);
+      // a tablet may re-send an identical order (safe retry); nothing else
+      allow update: if isOwner() || (request.auth != null && request.resource.data == resource.data);
+      allow delete: if isOwner();
+    }
+  }
+}

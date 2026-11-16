@@ -285,11 +285,11 @@ label.chip{cursor:pointer}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend u{display:inline-block;width:12px;height:12px;border-radius:3px;text-decoration:none}
 .rank{display:grid;gap:8px}
-.rrow{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) auto;gap:10px;align-items:center}
+.rrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 112px;gap:10px;align-items:center}
 .rname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rbar{height:14px;background:var(--bg);border-radius:4px;overflow:hidden}
 .rbar i{display:block;height:100%;background:var(--ch1);border-radius:0 4px 4px 0}
-.rnum{font:600 14px var(--font-num);white-space:nowrap}
+.rnum{font:600 14px var(--font-num);white-space:nowrap;text-align:right}
 .cols{display:flex;align-items:flex-end;gap:4px;height:150px;padding-top:18px;border-bottom:1px solid var(--line)}
 .col{flex:1 1 0;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
 .col i{display:block;width:100%;max-width:36px;background:var(--ch1);border-radius:4px 4px 0 0}
@@ -319,6 +319,10 @@ label.chip{cursor:pointer}
 .hist .hl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .hist .tk{margin:0 12px 12px;font-size:16px}
 .chip:disabled{opacity:.4;cursor:not-allowed}
+.mrow{display:grid;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.sact{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sact .grow{flex:1}
+.srow.x3{grid-template-columns:minmax(0,1fr) 96px auto}
 .hnote{margin:8px 0 0;color:var(--muted);font-size:14px}
 
 .toast{
@@ -360,7 +364,7 @@ label.chip{cursor:pointer}
       <button class="btn sm" data-act="printer" type="button"><span class="pdot" id="pdot"></span>Printer</button>
       <button class="btn sm" data-act="dash" type="button">Dashboard</button>
       <button class="btn sm" data-act="history" type="button">Orders today <span class="tcount" id="hcount">0</span></button>
-      <button class="btn sm" data-act="settings" type="button">Menu &amp; prices</button>
+      <button class="btn sm" id="menubtn" data-act="settings" type="button">Menu &amp; prices</button>
     </div>
   </header>
   <div class="banner" id="banner" hidden></div>
@@ -397,69 +401,74 @@ label.chip{cursor:pointer}
 <div class="scrim" id="scrim" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" tabindex="-1"></div></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
+<script src="firebase-config.js"></script>
 <script>
 (function(){
 'use strict';
 
 /* ---------- Menu data (prices in pence) ---------- */
-// row: [id, name, price, vegetarian, base, ingredients, description override]
-var RAW=[
- {id:'pizza',tab:'Pizzas',name:'Pizzas',kitchen:true,extras:true,quick:true,rows:[
-  ['margherita','Margherita',800,1,'Tomato',['mozzarella','Parmesan','basil oil']],
-  ['funghi','Al Funghi',900,1,'Tomato',['mozzarella','mushrooms','black truffle oil']],
-  ['vegetariana','Vegetariana',1125,1,'Tomato',['mozzarella','aubergine','courgette','roasted peppers','artichokes','mushrooms']],
-  ['piccante','La Piccante Siciliana',1125,0,'Tomato',['mozzarella','spicy pepperoni','Sicilian sausage']],
-  ['calabrese','Calabrese',1125,0,'Tomato',['mozzarella',"'nduja",'red onion','olives']],
-  ['affumicata','Affumicata',1125,0,'Tomato',['mozzarella','smoked cheese','pancetta','sun-dried tomatoes']],
-  ['romana','Romana',1125,0,'Tomato',['mozzarella','mushrooms','sun-dried tomatoes']],
-  ['napoletana','Napoletana',1125,0,'White',['mozzarella','cherry tomatoes','sausage','wild broccoli']],
-  ['itria',"La Valle d'Itria",1125,0,'Tomato',['mozzarella','fresh herbs','capocollo','ricotta','Parmesan']],
-  ['rustica','La Rustica',1200,0,'Tomato',['mozzarella','sausage','mushrooms','black truffle']],
-  ['capricciosissima','Capricciosissima',1225,0,'Tomato',['mozzarella','salami','roast ham','artichokes','olives']]
- ]},
- {id:'calz',tab:'Calzones',name:'Calzones & panzerotti',kitchen:true,extras:true,quick:true,rows:[
-  ['panz','Classic Panzerotto',700,1,'',['tomato','Parmesan','mozzarella','black pepper']],
-  ['panzspicy','Spicy Panzerotto',800,0,'',['tomato','Parmesan','mozzarella',"'nduja"]],
-  ['calzmarg','Baked Calzone Margherita',825,1,'',['tomato','Parmesan','mozzarella','basil']],
-  ['calz','Baked Calzone',1000,0,'',['tomato','Parmesan','mozzarella','salami','mushrooms']]
- ]},
- {id:'spec',tab:'Specialities',name:'Italian specialities',kitchen:true,extras:true,quick:true,rows:[
-  ['focaccia','Focaccia',700,1,'',['cherry tomatoes','oregano','olives']],
-  ['marinara','Marinara',700,0,'Tomato',['garlic','oregano','anchovies','basil oil']]
- ]},
- {id:'dessert',tab:'Desserts',name:'Desserts',kitchen:true,extras:false,quick:false,rows:[
-  ['nutella','Nutella Pizza',550,1,'',['Nutella','custard cream','icing sugar','chocolate sauce']],
-  ['tiramisu','Tiramisù',550,1,'',['cocoa'],'Coffee-soaked sponge, mascarpone, cocoa'],
-  ['cannoli','Cannoli Siciliani',550,1,'',[],'Sicilian pastry shells, sweet ricotta']
- ]},
- {id:'drink',tab:'Drinks',name:'Italian soft drinks',kitchen:false,extras:false,quick:false,rows:[
-  ['limonata','Limonata',200,0,'',[]],
-  ['aranciata','Aranciata',200,0,'',[]],
-  ['chinotto','Chinotto',200,0,'',[]],
-  ['rossa','Aranciata Rossa',250,0,'',[]]
- ]}
+// Built-in starting menu. When the menu is saved to Firebase, the cloud copy takes over.
+var MENU_ROWS=[ // [category, id, name, price, vegetarian]
+ ['pizza','margherita','Margherita',800,1],['pizza','funghi','Al Funghi',900,1],['pizza','vegetariana','Vegetariana',1125,1],
+ ['pizza','piccante','La Piccante Siciliana',1125,0],['pizza','calabrese','Calabrese',1125,0],['pizza','affumicata','Affumicata',1125,0],
+ ['pizza','romana','Romana',1125,0],['pizza','napoletana','Napoletana',1125,0],['pizza','itria',"La Valle d'Itria",1125,0],
+ ['pizza','rustica','La Rustica',1200,0],['pizza','capricciosissima','Capricciosissima',1225,0],
+ ['calz','panz','Classic Panzerotto',700,1],['calz','panzspicy','Spicy Panzerotto',800,0],['calz','calzmarg','Baked Calzone Margherita',825,1],['calz','calz','Baked Calzone',1000,0],
+ ['spec','focaccia','Focaccia',700,1],['spec','marinara','Marinara',700,0],
+ ['dessert','nutella','Nutella Pizza',550,1],['dessert','tiramisu','Tiramisù',550,1],['dessert','cannoli','Cannoli Siciliani',550,1],
+ ['drink','limonata','Limonata',200,0],['drink','aranciata','Aranciata',200,0],['drink','chinotto','Chinotto',200,0],['drink','rossa','Aranciata Rossa',250,0]
 ];
-var EXTRA_ROWS=[
- ['x-mozz','Extra mozzarella',150],['x-mush','Mushrooms',100],['x-olives','Olives',100],
- ['x-sdt','Sun-dried tomatoes',100],['x-art','Artichokes',100],['x-pep','Roasted peppers',100],
- ['x-onion','Red onion',100],['x-pepperoni','Spicy pepperoni',150],['x-sausage','Sicilian sausage',150],
- ['x-nduja',"'Nduja",150],['x-ham','Roast ham',150],['x-pancetta','Pancetta',150]
-];
+var DEFAULT_MENU={
+ categories:[
+  {id:'pizza',tab:'Pizzas',name:'Pizzas',kitchen:true,extras:true,quick:true},
+  {id:'calz',tab:'Calzones',name:'Calzones & panzerotti',kitchen:true,extras:true,quick:true},
+  {id:'spec',tab:'Specialities',name:'Italian specialities',kitchen:true,extras:true,quick:true},
+  {id:'dessert',tab:'Desserts',name:'Desserts',kitchen:true,extras:false,quick:false},
+  {id:'drink',tab:'Drinks',name:'Italian soft drinks',kitchen:false,extras:false,quick:false}
+ ],
+ items:MENU_ROWS.map(function(r){return {id:r[1],cat:r[0],name:r[2],price:r[3],veg:!!r[4],avail:true}}),
+ extras:[
+  ['x-mozz','Extra mozzarella',150],['x-mush','Mushrooms',100],['x-olives','Olives',100],
+  ['x-sdt','Sun-dried tomatoes',100],['x-art','Artichokes',100],['x-pep','Roasted peppers',100],
+  ['x-onion','Red onion',100],['x-pepperoni','Spicy pepperoni',150],['x-sausage','Sicilian sausage',150],
+  ['x-nduja',"'Nduja",150],['x-ham','Roast ham',150],['x-pancetta','Pancetta',150]
+ ].map(function(r){return {id:r[0],name:r[1],price:r[2]}})
+};
 var QUICK=['Well done','Lightly baked','Cut in 8',"Don't cut"];
 var KEY='till.v1';
 
-var ITEM={}, EX={}, CATOF={};
-var CATS=RAW.map(function(c){
-  var cat={id:c.id,tab:c.tab,name:c.name,kitchen:c.kitchen,extras:c.extras,quick:c.quick,items:[]};
-  c.rows.forEach(function(r){
-    var it={id:r[0],name:r[1],price:r[2],veg:!!r[3],base:r[4],ing:r[5],d:r[6]||'',cat:c.id,avail:true,def:{name:r[1],price:r[2]}};
+var ITEM={}, EX={}, CATOF={}, CATS=[], EXTRAS=[];
+function validMenu(m){
+  if(!m||!Array.isArray(m.categories)||!Array.isArray(m.items)||!Array.isArray(m.extras)||!m.categories.length) return false;
+  var cats={}, ids={}, xs={}, i;
+  for(i=0;i<m.categories.length;i++){var c=m.categories[i]; if(!c||typeof c.id!=='string'||typeof c.tab!=='string'||cats[c.id]) return false; cats[c.id]=1;}
+  for(i=0;i<m.items.length;i++){var it=m.items[i]; if(!it||typeof it.id!=='string'||!cats[it.cat]||typeof it.name!=='string'||!it.name.trim()||typeof it.price!=='number'||!isFinite(it.price)||it.price<0||ids[it.id]) return false; ids[it.id]=1;}
+  for(i=0;i<m.extras.length;i++){var e=m.extras[i]; if(!e||typeof e.id!=='string'||typeof e.name!=='string'||!e.name.trim()||typeof e.price!=='number'||!isFinite(e.price)||e.price<0||xs[e.id]) return false; xs[e.id]=1;}
+  return true;
+}
+function buildMenu(m){
+  ITEM={};EX={};CATOF={};
+  CATS=m.categories.map(function(c){
+    var cat={id:c.id,tab:String(c.tab),name:String(c.name||c.tab),kitchen:c.kitchen!==false,extras:!!c.extras,quick:!!c.quick,items:[]};
+    CATOF[c.id]=cat; return cat;
+  });
+  m.items.forEach(function(i){
+    var cat=CATOF[i.cat]; if(!cat) return;
+    var it={id:i.id,name:String(i.name).slice(0,60),price:Math.round(i.price),veg:!!i.veg,avail:i.avail!==false,cat:i.cat};
     ITEM[it.id]=it; cat.items.push(it);
   });
-  CATOF[c.id]=cat; return cat;
-});
-var EXTRAS=EXTRA_ROWS.map(function(r){
-  var e={id:r[0],name:r[1],price:r[2],def:{name:r[1],price:r[2]}}; EX[e.id]=e; return e;
-});
+  EXTRAS=m.extras.map(function(e){var x={id:e.id,name:String(e.name).slice(0,60),price:Math.round(e.price)}; EX[x.id]=x; return x;});
+  if(typeof S==='object'&&S&&!CATOF[S.tab]&&CATS.length) S.tab=CATS[0].id;
+}
+function menuObj(){
+  var items=[]; CATS.forEach(function(c){c.items.forEach(function(it){items.push({id:it.id,cat:c.id,name:it.name,price:it.price,veg:it.veg,avail:it.avail})})});
+  return {
+    categories:CATS.map(function(c){return {id:c.id,tab:c.tab,name:c.name,kitchen:c.kitchen,extras:c.extras,quick:c.quick}}),
+    items:items,
+    extras:EXTRAS.map(function(e){return {id:e.id,name:e.name,price:e.price}})
+  };
+}
+buildMenu(DEFAULT_MENU);
 
 /* ---------- Helpers ---------- */
 var $=function(s){return document.querySelector(s)};
@@ -470,11 +479,18 @@ var todayStr=function(){return new Date().toLocaleDateString('en-CA')};
 var desc=function(){return ''}; // ingredients are not shown; staff know the menu
 
 /* ---------- State ---------- */
-var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr(),print:{auto:false,width:80,name:''},lastExport:0,lastBackup:0};
+var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr(),print:{auto:false,width:80,name:''},lastExport:0,lastBackup:0,menuVersion:0,menuDirty:false,dev:'',tabName:'',pushed:{},delQ:[]};
 
 var DBN='localino-till', IDB=null, ORDKEYS={}, LSHAD=false, saveTimer=null, ST={idb:false,persisted:null,err:''};
+function ensureDev(){
+  if(S.dev) return;
+  var a='abcdefghijkmnpqrstuvwxyz23456789', r='';
+  for(var i=0;i<10;i++) r+=a.charAt(Math.floor(Math.random()*a.length));
+  S.dev=r;
+}
+function oid(o){return o.t+'-'+(o.dev||S.dev)}
 function validOrder(o){return !!(o&&typeof o.t==='number'&&typeof o.total==='number'&&Array.isArray(o.lines))}
-function applyMenu(d){
+function applyLegacyMenu(d){
   if(d.items) Object.keys(d.items).forEach(function(id){
     var it=ITEM[id], v=d.items[id]; if(!it||!v) return;
     if(typeof v.name==='string'&&v.name.trim()) it.name=v.name;
@@ -487,8 +503,22 @@ function applyMenu(d){
     if(typeof v.price==='number'&&isFinite(v.price)&&v.price>=0) e.price=Math.round(v.price);
   });
 }
+function restoreMenu(d){
+  if(d.menu&&validMenu(d.menu)) buildMenu(d.menu);
+  else if(d.items||d.extras){ buildMenu(DEFAULT_MENU); applyLegacyMenu(d); }   // older saves kept only price and name edits
+}
+function pruneLines(){
+  S.lines=S.lines.filter(function(l){return ITEM[l.id]});
+  S.lines.forEach(function(l){l.add=l.add.filter(function(x){return EX[x]})});
+}
 function applyState(d){
-  applyMenu(d);
+  restoreMenu(d);
+  if(typeof d.menuVersion==='number') S.menuVersion=d.menuVersion;
+  if(typeof d.menuDirty==='boolean') S.menuDirty=d.menuDirty;
+  if(typeof d.dev==='string'&&/^[A-Za-z0-9]{4,40}$/.test(d.dev)) S.dev=d.dev;
+  if(typeof d.tabName==='string') S.tabName=d.tabName.slice(0,40);
+  if(d.pushed&&typeof d.pushed==='object'&&!Array.isArray(d.pushed)) Object.keys(d.pushed).forEach(function(k){ if(d.pushed[k]) S.pushed[k]=1; });
+  if(Array.isArray(d.delQ)) d.delQ.forEach(function(k){ if(typeof k==='string'&&S.delQ.indexOf(k)<0) S.delQ.push(k); });
   if(typeof d.n==='number'&&d.n>=1) S.n=Math.floor(d.n);
   if(typeof d.label==='string') S.label=d.label.slice(0,40);
   if(Array.isArray(d.lines)) S.lines=d.lines.filter(function(l){return l&&ITEM[l.id]&&l.qty>=1}).map(function(l){
@@ -502,7 +532,7 @@ function applyState(d){
 function stateObj(){
   var items={}; Object.keys(ITEM).forEach(function(id){var it=ITEM[id]; items[id]={name:it.name,price:it.price,avail:it.avail}});
   var extras={}; Object.keys(EX).forEach(function(id){var e=EX[id]; extras[id]={name:e.name,price:e.price}});
-  return {items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,print:S.print,lastExport:S.lastExport,lastBackup:S.lastBackup,savedAt:Date.now()};
+  return {items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,print:S.print,lastExport:S.lastExport,lastBackup:S.lastBackup,menu:menuObj(),menuVersion:S.menuVersion,menuDirty:S.menuDirty,dev:S.dev,tabName:S.tabName,pushed:S.pushed,delQ:S.delQ,savedAt:Date.now()};
 }
 // Every order is stored twice: IndexedDB (primary) and a localStorage copy. On start they are merged, so losing one does not lose orders.
 function load(){
@@ -512,6 +542,7 @@ function load(){
     try{applyState(d)}catch(e){}
     if(Array.isArray(d.log)) S.log=d.log.filter(validOrder);
   }
+  ensureDev();
   ensureTakings();
 }
 function persistNow(){
@@ -564,6 +595,7 @@ async function loadIDB(){
     ORDKEYS={}; ords.forEach(function(o){ORDKEYS[o.t]=1});
     var restored=false;
     if(!LSHAD&&ids){ applyState(ids); restored=true; }      // browser copy was wiped, database survived
+    ensureDev();
     var have={}; S.log.forEach(function(o){have[o.t]=1});
     var added=0;
     ords.forEach(function(o){ if(!have[o.t]){S.log.push(o); added++;} });
@@ -585,6 +617,10 @@ function requestPersist(){
     }).catch(function(){});
   }catch(e){}
 }
+function prunePushed(){
+  var keep={}; S.log.forEach(function(o){keep[oid(o)]=1});
+  Object.keys(S.pushed).forEach(function(k){ if(!keep[k]) delete S.pushed[k]; });
+}
 function ensureTakings(){
   // a new day restarts ticket numbering; orders are kept for 30 days
   var t=todayStr();
@@ -592,6 +628,7 @@ function ensureTakings(){
   var cut=daysAgoStart(RETAIN_DAYS-1), before=S.log.length;
   S.log=S.log.filter(function(o){return o.t>=cut});
   if(S.log.length!==before){syncOrders(); save();}
+  prunePushed();
 }
 
 /* ---------- Order maths ---------- */
@@ -648,7 +685,7 @@ function renderTabs(){
   }).join('');
 }
 function renderItems(){
-  var c=CATOF[S.tab];
+  var c=CATOF[S.tab]||CATS[0];
   $('#items').innerHTML=c.items.map(function(it){
     var q=qtyOf(it.id);
     var tight=Math.max.apply(null,it.name.split(' ').map(function(w){return w.length}))>11;
@@ -692,7 +729,7 @@ function renderTotals(){
   $('#btn-pay').disabled=!n;
   $('#btn-ticket').disabled=!n;
 }
-function renderAll(){renderTabs();renderItems();renderLines();renderTotals();updateBanner()}
+function renderAll(){renderTabs();renderItems();renderLines();renderTotals();updateBanner();updateMenuBar()}
 
 /* ---------- Sheets ---------- */
 function paintSheet(html,cls){
@@ -733,7 +770,7 @@ function openCust(i){
 }
 function renderCust(){
   var l=S.lines[C.i], it=ITEM[l.id], cat=CATOF[it.cat], h='';
-  var unit=it.price+C.add.reduce(function(s,x){return s+EX[x].price},0);
+  var unit=it.price+C.add.reduce(function(s,x){return s+(EX[x]?EX[x].price:0)},0);
   if(cat.extras){
     h+='<div><h3>Add extra</h3><div class="chips">'+EXTRAS.map(function(e){
       var on=C.add.indexOf(e.id)>=0;
@@ -863,12 +900,12 @@ function complete(how){
     msg+=g>tot?' · change '+money(g-tot):' · exact';
   } else msg+=' · card';
   ensureTakings();
-  S.log.push({n:S.n,t:Date.now(),label:S.label,total:tot,how:how==='cash'?'cash':'card',given:how==='cash'?g:null,
+  S.log.push({n:S.n,t:Date.now(),dev:S.dev,tab:S.tabName,label:S.label,total:tot,how:how==='cash'?'cash':'card',given:how==='cash'?g:null,
     lines:S.lines.map(function(l){var it=ITEM[l.id];return {q:l.qty,name:it.name,mods:mods(l).map(function(x){return x.t}),amt:lineUnit(l)*l.qty}})});
   var tk=ticketObj(), ttx=ticketText();
   S.n++; S.lines=[]; S.label=''; $('#label').value='';
   closeSheet(); $('#order').classList.remove('open');
-  renderAll(); persistNow(); syncOrders(); toast(msg);
+  renderAll(); persistNow(); syncOrders(); pushOrders(); toast(msg);
   // chef ticket prints by itself; if it can't, show it on screen to write out by hand
   if(S.print.auto&&tk.items.length) printTicket(tk).then(function(ok){
     if(ok) toast(msg+' · ticket printed');
@@ -882,9 +919,15 @@ function hhmm(ms){return new Date(ms).toLocaleTimeString('en-GB',{hour:'2-digit'
 function dayOf(ms){return new Date(ms).toLocaleDateString('en-CA')}
 function daysAgoStart(n){var d=new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-n); return d.getTime()}
 function todays(){var t=todayStr(); return S.log.filter(function(o){return dayOf(o.t)===t})}
+function viewLog(){
+  var ids=Object.keys(CLOUDORD); if(!ids.length) return S.log;
+  var m={}; S.log.forEach(function(o){m[oid(o)]=o});
+  ids.forEach(function(k){ if(!m[k]) m[k]=CLOUDORD[k]; });
+  return Object.keys(m).map(function(k){return m[k]}).sort(function(a,b){return a.t-b.t});
+}
 function daysWithOrders(){
   var m={}, t=todayStr();
-  S.log.forEach(function(o){var d=dayOf(o.t); if(!m[d]) m[d]={n:0,total:0}; m[d].n++; m[d].total+=o.total;});
+  viewLog().forEach(function(o){var d=dayOf(o.t); if(!m[d]) m[d]={n:0,total:0}; m[d].n++; m[d].total+=o.total;});
   if(!m[t]) m[t]={n:0,total:0};
   return Object.keys(m).sort().reverse().map(function(d){return {d:d,n:m[d].n,total:m[d].total}});
 }
@@ -894,10 +937,11 @@ function dayName(d){
   return new Date(d+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
 }
 function rangeOrders(kind){
-  if(kind==='today') return S.log.filter(function(o){return o.t>=daysAgoStart(0)});
-  if(kind==='week') return S.log.filter(function(o){return o.t>=daysAgoStart(6)});
-  if(kind==='last') return S.lastExport?S.log.filter(function(o){return o.t>S.lastExport}):[];
-  return S.log.slice();
+  var V=viewLog();
+  if(kind==='today') return V.filter(function(o){return o.t>=daysAgoStart(0)});
+  if(kind==='week') return V.filter(function(o){return o.t>=daysAgoStart(6)});
+  if(kind==='last') return S.lastExport?V.filter(function(o){return o.t>S.lastExport}):[];
+  return V.slice();
 }
 function csvCell(v){
   var s=String(v==null?'':v);
@@ -905,12 +949,12 @@ function csvCell(v){
   return /[",\r\n]/.test(s)||s!==s.trim()?'"'+s.replace(/"/g,'""')+'"':s;
 }
 function buildCsv(L){
-  var rows=[['Date','Time','Order no','Name / table','Items','Item count','Total (£)','Payment','Cash given (£)','Change (£)']];
+  var rows=[['Date','Time','Order no','Name / table','Items','Item count','Total (£)','Payment','Cash given (£)','Change (£)','Tablet']];
   L.forEach(function(o){
     var items=o.lines.map(function(l){return l.q+'x '+l.name+(l.mods&&l.mods.length?' ('+l.mods.join(', ')+')':'')}).join('; ');
     var cnt=o.lines.reduce(function(s,l){return s+l.q},0);
     var cash=o.how==='cash'&&o.given!=null;
-    rows.push([dayOf(o.t),hhmm(o.t),o.n,o.label||'',items,cnt,(o.total/100).toFixed(2),o.how==='cash'?'Cash':'Card',cash?(o.given/100).toFixed(2):'',cash?((o.given-o.total)/100).toFixed(2):'']);
+    rows.push([dayOf(o.t),hhmm(o.t),o.n,o.label||'',items,cnt,(o.total/100).toFixed(2),o.how==='cash'?'Cash':'Card',cash?(o.given/100).toFixed(2):'',cash?((o.given-o.total)/100).toFixed(2):'',o.tab||'']);
   });
   return rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n')+'\r\n';
 }
@@ -987,7 +1031,7 @@ function doRestore(withMenu){
   if(!RB) return;
   RB.fresh.forEach(function(o){S.log.push(o)});
   S.log.sort(function(a,b){return a.t-b.t});
-  if(withMenu&&RB.b.state) applyMenu(RB.b.state);
+  if(withMenu&&RB.b.state){ restoreMenu(RB.b.state); pruneLines(); if(CLOUD.configured) S.menuDirty=true; }
   var n=RB.fresh.length; RB=null;
   ensureTakings(); persistNow(); syncOrders(); closeSheet(); renderAll(); toast('Restored '+n+(n===1?' order':' orders'));
 }
@@ -1007,9 +1051,9 @@ function renderHistory(){
   ensureTakings();
   var days=daysWithOrders();
   if(!HD||!days.some(function(x){return x.d===HD})) HD=todayStr();
-  var L=S.log.filter(function(o){return dayOf(o.t)===HD}), tot=0, cash=0, card=0;
+  var V=viewLog(), L=V.filter(function(o){return dayOf(o.t)===HD}), tot=0, cash=0, card=0;
   L.forEach(function(o){tot+=o.total; if(o.how==='cash') cash+=o.total; else card+=o.total;});
-  var cnt={today:rangeOrders('today').length,last:rangeOrders('last').length,week:rangeOrders('week').length,all:S.log.length};
+  var cnt={today:rangeOrders('today').length,last:rangeOrders('last').length,week:rangeOrders('week').length,all:V.length};
   var ex=[['today','Today'],['last','Since last export'],['week','Last 7 days'],['all','All kept (30 days)']];
   var h='<select class="in" id="hday" data-k="hday" aria-label="Choose a day">'+days.map(function(x){
     return '<option value="'+x.d+'"'+(x.d===HD?' selected':'')+'>'+esc(dayName(x.d))+' · '+x.n+(x.n===1?' order':' orders')+' · '+money(x.total)+'</option>';
@@ -1027,7 +1071,7 @@ function renderHistory(){
     h+='<div class="empty"><b>No orders on this day</b><span>Each completed order is listed here with the time it went through.</span></div>';
   } else {
     h+='<div class="hist">'+L.slice().reverse().map(function(o){
-      var tx=['ORDER '+o.n+(o.label?'   '+o.label.toUpperCase():'')];
+      var tx=['ORDER '+o.n+(o.label?'   '+o.label.toUpperCase():'')+(o.tab?'   ['+String(o.tab).toUpperCase()+']':'')];
       o.lines.forEach(function(l){
         tx.push(l.q+'× '+l.name.toUpperCase()+'   '+money(l.amt));
         l.mods.forEach(function(m){tx.push('     '+m.toUpperCase())});
@@ -1039,7 +1083,7 @@ function renderHistory(){
     }).join('')+'</div>';
   }
   paintSheet(
-    '<div class="shead"><h2>Orders</h2><p>Pick a day, tap an order to see its ticket.</p></div>'+
+    '<div class="shead"><h2>Orders</h2><p>'+(Object.keys(CLOUDORD).length?'Orders from all tablets. ':'')+'Pick a day, tap an order to see its ticket.</p></div>'+
     '<div class="sbody">'+h+'</div>'+
     '<div class="sfoot"><button class="btn primary" type="button" data-act="close">Close</button></div>'
   );
@@ -1117,34 +1161,102 @@ function renderDash(){
   );
 }
 
-/* ---- Settings ---- */
+/* ---- Settings and menu editor ---- */
 function openSettings(){renderSettings(); openSheet('settings')}
+function menuLocked(){return CLOUD.configured&&CLOUD.state!=='error'&&!CLOUD.user}
+function canPublish(){return CLOUD.configured&&CLOUD.state==='ready'&&!!CLOUD.user}
+function menuStatusHtml(){
+  var line, btns='';
+  if(!CLOUD.configured){ line='This menu is stored on this device only. Cloud sync is not set up yet.'; }
+  else if(CLOUD.state==='loading'){ line='Connecting to the cloud…'; }
+  else if(CLOUD.state==='error'){ line='Could not reach the cloud ('+esc(CLOUD.err)+'). Using the menu saved on this tablet; changes here stay on this tablet.'; }
+  else {
+    line=(CLOUD.user?'Signed in as '+esc(CLOUD.user.email):'Not signed in.')+' · '+
+      (CLOUD.fromCache?'offline, using the menu saved on this tablet':(CLOUD.synced?'in sync, updated '+hhmm(CLOUD.synced):'connected'));
+    if(CLOUD.empty) line+=' · No menu in the cloud yet. Save to upload this one.';
+    if(S.menuDirty) line+=' · You have unsaved changes.';
+    if(CLOUD.held) line+=' · A newer menu is waiting in the cloud. Saving will replace it.';
+    btns=CLOUD.user?'<button class="btn sm ghost" data-act="mSignOut" type="button">Sign out</button>':'<button class="btn primary" data-act="mSignIn" type="button">Sign in with Google</button>';
+    if(CLOUD.held) btns+='<button class="btn sm" data-act="mDiscard" type="button">Discard my changes, load the cloud menu</button>';
+  }
+  return '<p class="hnote" style="margin:0 0 8px">'+line+'</p>'+ordersStatusHtml()+(btns?'<div class="chips">'+btns+'</div>':'');
+}
+function ordersStatusHtml(){
+  if(!CLOUD.configured) return '';
+  var pend=S.log.filter(function(o){return !S.pushed[oid(o)]}).length, t;
+  if(CLOUD.state==='error') t='Orders are saved on this tablet and will back up to the cloud when it can connect.';
+  else if(CLOUD.ordErr) t='Order backup problem: '+esc(CLOUD.ordErr)+'. Orders are safe on this tablet.';
+  else if(pend) t=pend+(pend===1?' order is':' orders are')+' waiting to back up to the cloud.';
+  else t='All orders are backed up to the cloud.';
+  if(CLOUD.user) t+=CLOUD.ordOk?' Order history shows all tablets.':' Order history shows this tablet only.';
+  return '<p class="hnote" style="margin:0 0 8px">'+t+'</p>';
+}
+function itemRow(it,i,n){
+  return '<div class="mrow"><div class="srow x">'+
+    '<input class="in" id="mn-'+it.id+'" data-k="name" data-id="'+it.id+'" value="'+esc(it.name)+'" aria-label="Item name" maxlength="60">'+
+    '<label class="money-in"><span>£</span><input class="in" id="mp-'+it.id+'" data-k="price" data-id="'+it.id+'" inputmode="decimal" value="'+(it.price/100).toFixed(2)+'" aria-label="Price for '+esc(it.name)+'"></label></div>'+
+    '<div class="sact"><label class="sw"><input type="checkbox" data-k="avail" data-id="'+it.id+'"'+(it.avail?' checked':'')+'>On sale</label>'+
+    '<label class="sw"><input type="checkbox" data-k="veg" data-id="'+it.id+'"'+(it.veg?' checked':'')+'>Veg</label><span class="grow"></span>'+
+    '<button class="btn sm" type="button" data-act="mUp" data-id="'+it.id+'" aria-label="Move up"'+(i===0?' disabled':'')+'>↑</button>'+
+    '<button class="btn sm" type="button" data-act="mDown" data-id="'+it.id+'" aria-label="Move down"'+(i===n-1?' disabled':'')+'>↓</button>'+
+    '<button class="btn sm ghost danger" type="button" data-act="mDel" data-id="'+it.id+'">Delete</button></div></div>';
+}
 function renderSettings(){
   ensureTakings();
   var tl=todays(), t={orders:tl.length,total:tl.reduce(function(s,o){return s+o.total},0)}, h='';
   h+='<section class="set"><h3>Today</h3><div class="takings"><b>'+money(t.total)+'</b><span class="grow">'+t.orders+(t.orders===1?' order':' orders')+'</span>'+
      '<button class="btn sm ghost danger" type="button" data-act="resetToday">Reset today</button></div></section>';
-  CATS.forEach(function(c){
-    h+='<section class="set"><h3>'+esc(c.name)+'</h3>'+c.items.map(function(it){
-      return '<div class="srow">'+
-        '<input class="in" id="n-'+it.id+'" data-k="name" data-id="'+it.id+'" value="'+esc(it.name)+'" aria-label="Name">'+
-        '<label class="money-in"><span>£</span><input class="in" id="p-'+it.id+'" data-k="price" data-id="'+it.id+'" inputmode="decimal" value="'+(it.price/100).toFixed(2)+'" aria-label="Price for '+esc(it.name)+'"></label>'+
-        '<label class="sw"><input type="checkbox" id="a-'+it.id+'" data-k="avail" data-id="'+it.id+'"'+(it.avail?' checked':'')+'>On</label>'+
-      '</div>';
-    }).join('')+'</section>';
-  });
-  h+='<section class="set"><h3>Extras (price per topping)</h3>'+EXTRAS.map(function(e){
-    return '<div class="srow x">'+
-      '<input class="in" id="xn-'+e.id+'" data-k="xname" data-id="'+e.id+'" value="'+esc(e.name)+'" aria-label="Extra name">'+
-      '<label class="money-in"><span>£</span><input class="in" id="xp-'+e.id+'" data-k="xprice" data-id="'+e.id+'" inputmode="decimal" value="'+(e.price/100).toFixed(2)+'" aria-label="Price for '+esc(e.name)+'"></label>'+
-    '</div>';
-  }).join('')+'</section>';
+  h+='<section class="set"><h3>This tablet</h3><div class="srow x"><input class="in" id="tabname" data-k="tabname" value="'+esc(S.tabName)+'" placeholder="Name, e.g. Counter" aria-label="Tablet name" maxlength="40"></div>'+
+     '<p class="hnote" style="margin:0">Shown on orders and in the export, so you can tell tablets apart.</p></section>';
+  h+='<section class="set"><h3>Cloud sync</h3>'+menuStatusHtml()+'</section>';
+  if(menuLocked()){
+    h+='<section class="set"><p class="hnote" style="margin:0">The menu is shared between tablets. Sign in with the owner Google account to change items or prices.</p></section>';
+  } else {
+    CATS.forEach(function(c){
+      h+='<section class="set"><h3>'+esc(c.name)+'</h3>'+c.items.map(function(it,i){return itemRow(it,i,c.items.length)}).join('')+
+        '<div><button class="btn sm" type="button" data-act="mAdd" data-v="'+c.id+'">+ Add item</button></div></section>';
+    });
+    h+='<section class="set"><h3>Extras (price per topping)</h3>'+EXTRAS.map(function(e){
+      return '<div class="srow x3">'+
+        '<input class="in" id="xn-'+e.id+'" data-k="xname" data-id="'+e.id+'" value="'+esc(e.name)+'" aria-label="Extra name" maxlength="60">'+
+        '<label class="money-in"><span>£</span><input class="in" id="xp-'+e.id+'" data-k="xprice" data-id="'+e.id+'" inputmode="decimal" value="'+(e.price/100).toFixed(2)+'" aria-label="Price for '+esc(e.name)+'"></label>'+
+        '<button class="btn sm ghost danger" type="button" data-act="xDel" data-id="'+e.id+'">Delete</button></div>';
+    }).join('')+'<div><button class="btn sm" type="button" data-act="xAdd">+ Add extra</button></div></section>';
+  }
   paintSheet(
-    '<div class="shead"><h2>Menu &amp; prices</h2><p>Edits save on this device straight away. Switch an item off when it sells out.</p></div>'+
+    '<div class="shead"><h2>Menu &amp; prices</h2><p>'+(CLOUD.configured?'Changes reach the other tablets when you tap Save to all tablets.':'Changes save on this device straight away.')+'</p></div>'+
     '<div class="sbody">'+h+'</div>'+
-    '<div class="sfoot"><button class="btn ghost danger grow" type="button" data-act="resetMenu">Reset menu to start</button>'+
-      '<button class="btn primary" type="button" data-act="close">Done</button></div>'
+    '<div class="sfoot">'+(menuLocked()?'':'<button class="btn ghost danger grow" type="button" data-act="resetMenu">Reset menu to start</button>')+
+      (canPublish()?'<button class="btn'+(S.menuDirty?' primary':'')+'" type="button" data-act="mSave">Save to all tablets</button>':'')+
+      '<button class="btn'+(canPublish()&&S.menuDirty?'':' primary')+'" type="button" data-act="close">Done</button></div>'
   );
+}
+function newId(p){return p+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+function menuChanged(){ if(CLOUD.configured) S.menuDirty=true; pruneLines(); save(); renderAll(); }
+function menuAdd(catId){
+  var c=CATOF[catId]; if(!c) return;
+  var it={id:newId('i'),name:'New item',price:0,veg:false,avail:true,cat:catId};
+  ITEM[it.id]=it; c.items.push(it); menuChanged(); renderSettings();
+  var el=document.getElementById('mn-'+it.id); if(el&&el.focus){el.focus(); if(el.select) el.select();}
+}
+function menuMove(id,dir){
+  var it=ITEM[id]; if(!it) return; var arr=CATOF[it.cat].items, i=arr.indexOf(it), j=i+dir;
+  if(j<0||j>=arr.length) return; arr[i]=arr[j]; arr[j]=it; menuChanged(); renderSettings();
+}
+function menuDelete(id){
+  var it=ITEM[id]; if(!it) return; var arr=CATOF[it.cat].items; arr.splice(arr.indexOf(it),1); delete ITEM[id];
+  menuChanged(); renderSettings();
+}
+function extraAdd(){
+  var e={id:newId('x'),name:'New extra',price:100}; EX[e.id]=e; EXTRAS.push(e); menuChanged(); renderSettings();
+  var el=document.getElementById('xn-'+e.id); if(el&&el.focus){el.focus(); if(el.select) el.select();}
+}
+function extraDelete(id){
+  var e=EX[id]; if(!e) return; EXTRAS.splice(EXTRAS.indexOf(e),1); delete EX[id]; menuChanged(); renderSettings();
+}
+function updateMenuBar(){
+  var b=$('#menubtn'); if(!b) return;
+  b.innerHTML='Menu &amp; prices'+(CLOUD.configured&&S.menuDirty?' <span class="tcount">!</span>':'');
 }
 function onFormInput(e){
   var el=e.target;
@@ -1154,13 +1266,16 @@ function onFormInput(e){
   if(k==='prauto'){S.print.auto=el.checked; save(); return;}
   if(k==='hday'){HD=el.value; renderHistory(); return;}
   if(k==='restore'){restoreFile(el); return;}
+  if(k==='tabname'){S.tabName=el.value.slice(0,40); save(); return;}
   var id=el.dataset.id, it=ITEM[id], ex=EX[id], v;
-  if(k==='name'&&it){ if(el.value.trim()) it.name=el.value; }
+  if(k==='name'&&it){ if(el.value.trim()) it.name=el.value.slice(0,60); }
   else if(k==='price'&&it){ v=parseFloat(el.value.replace(',','.')); if(isFinite(v)&&v>=0) it.price=Math.round(v*100); if(e.type==='change') el.value=(it.price/100).toFixed(2); }
   else if(k==='avail'&&it){ it.avail=el.checked; }
-  else if(k==='xname'&&ex){ if(el.value.trim()) ex.name=el.value; }
+  else if(k==='veg'&&it){ it.veg=el.checked; }
+  else if(k==='xname'&&ex){ if(el.value.trim()) ex.name=el.value.slice(0,60); }
   else if(k==='xprice'&&ex){ v=parseFloat(el.value.replace(',','.')); if(isFinite(v)&&v>=0) ex.price=Math.round(v*100); if(e.type==='change') el.value=(ex.price/100).toFixed(2); }
-  save(); renderAll();
+  else return;
+  menuChanged();
 }
 
 /* ---------- Bluetooth printer (ESC/POS over Web Bluetooth, chef ticket only) ---------- */
@@ -1293,6 +1408,165 @@ function prInit(){
   }).catch(function(){});
 }
 
+/* ---------- Cloud menu (Firebase) ---------- */
+// The Firebase settings live in firebase-config.js (window.FIREBASE_CONFIG). Without it the menu stays on this device.
+var FIREBASE_CONFIG=(typeof window==='object'&&window&&window.FIREBASE_CONFIG)||null;
+var FIREBASE_VERSION='10.14.1';
+var CLOUD={configured:!!(FIREBASE_CONFIG&&FIREBASE_CONFIG.projectId),state:'off',db:null,auth:null,user:null,fromCache:true,synced:0,err:'',held:false,empty:false,latest:null,booted:false,ordErr:'',ordOk:false,ordUnsub:null,anonTried:false};
+var CLOUDORD={}, INFLIGHT={};
+function loadScript(src){
+  return new Promise(function(res,rej){
+    var el=document.createElement('script'); el.src=src; el.async=false;
+    el.onload=res; el.onerror=function(){rej(new Error('could not load the Firebase library'))};
+    document.head.appendChild(el);
+  });
+}
+function refreshSettings(){ if(S.sheet==='settings') renderSettings(); }
+function applyRemoteMenu(d,notify){
+  var wasUpdate=S.menuVersion>0;
+  buildMenu(d); S.menuVersion=typeof d.version==='number'?d.version:0; S.menuDirty=false; CLOUD.held=false;
+  pruneLines(); persistNow(); renderAll(); refreshSettings();
+  if(notify&&wasUpdate) toast('Menu updated');
+}
+async function cloudInit(){
+  if(!CLOUD.configured||CLOUD.state==='loading'||CLOUD.state==='ready') return;
+  CLOUD.state='loading';
+  try{
+    var base='https://www.gstatic.com/firebasejs/'+FIREBASE_VERSION+'/';
+    if(typeof firebase==='undefined'){
+      await loadScript(base+'firebase-app-compat.js');
+      await Promise.all([loadScript(base+'firebase-auth-compat.js'),loadScript(base+'firebase-firestore-compat.js')]);
+    }
+    if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    CLOUD.db=firebase.firestore();
+    try{ await CLOUD.db.enablePersistence({synchronizeTabs:true}); }catch(e){}   // keeps the menu and unsent orders safe offline
+    CLOUD.auth=firebase.auth();
+    CLOUD.auth.onAuthStateChanged(onAuth);
+    CLOUD.db.collection('menu').doc('current').onSnapshot({includeMetadataChanges:true},function(snap){
+      CLOUD.fromCache=!!snap.metadata.fromCache;
+      if(!CLOUD.fromCache) CLOUD.synced=Date.now();
+      if(!snap.exists){ CLOUD.empty=true; refreshSettings(); return; }
+      CLOUD.empty=false;
+      var d=snap.data();
+      if(!validMenu(d)){ CLOUD.err='the menu in the cloud is not valid'; refreshSettings(); return; }
+      CLOUD.latest=d;
+      var ver=typeof d.version==='number'?d.version:0;
+      if(ver>S.menuVersion){
+        if(S.menuDirty){ CLOUD.held=true; refreshSettings(); }
+        else applyRemoteMenu(d,true);
+      } else refreshSettings();
+    },function(err){ CLOUD.err=(err&&(err.code||err.message))||'error'; refreshSettings(); });
+    CLOUD.state='ready'; CLOUD.booted=true;
+  }catch(e){
+    CLOUD.state='error'; CLOUD.err=String((e&&e.message)||e);
+  }
+  refreshSettings(); updateMenuBar();
+  if(CLOUD.state==='ready') pushOrders();
+}
+function onAuth(u){
+  CLOUD.user=(u&&!u.isAnonymous)?u:null;
+  if(!u&&!CLOUD.anonTried){
+    CLOUD.anonTried=true;   // tablets sign in anonymously so they can send orders; only the owner's Google account can read or edit
+    CLOUD.auth.signInAnonymously().catch(function(e){ CLOUD.ordErr='anonymous sign-in failed ('+((e&&e.code)||'error')+')'; refreshSettings(); });
+  }
+  if(u){ CLOUD.anonTried=false; CLOUD.ordErr=''; }
+  ordersWatch(!!CLOUD.user);
+  flushDeletes(); pushOrders(); refreshSettings();
+}
+function ordersWatch(on){
+  if(CLOUD.ordUnsub){ try{CLOUD.ordUnsub()}catch(e){} CLOUD.ordUnsub=null; }
+  if(!on||!CLOUD.db){ var had=Object.keys(CLOUDORD).length; CLOUDORD={}; CLOUD.ordOk=false; if(had) repaintOrders(); return; }
+  var cut=daysAgoStart(RETAIN_DAYS-1);
+  CLOUD.ordUnsub=CLOUD.db.collection('orders').where('t','>=',cut).orderBy('t').onSnapshot(function(snap){
+    var m={}, same=true, n=0;
+    snap.forEach(function(d){ var o=d.data(); if(validOrder(o)){ m[d.id]=o; n++; if(!CLOUDORD[d.id]) same=false; } });
+    if(n!==Object.keys(CLOUDORD).length) same=false;
+    CLOUDORD=m; CLOUD.ordOk=true;
+    if(!same) repaintOrders();
+    refreshSettings();
+  },function(err){
+    CLOUDORD={}; CLOUD.ordOk=false;
+    if(err&&err.code!=='permission-denied') CLOUD.ordErr=err.code||'error';
+    refreshSettings();
+  });
+}
+function repaintOrders(){
+  if(S.sheet==='history') renderHistory();
+  else if(S.sheet==='dash') renderDash();
+}
+function orderPayload(o){
+  var p={t:o.t,total:o.total,how:o.how==='cash'?'cash':'card',dev:o.dev||S.dev,
+    lines:o.lines.map(function(l){return {q:l.q,name:String(l.name),mods:(l.mods||[]).map(String),amt:l.amt}})};
+  if(typeof o.n==='number') p.n=o.n;
+  if(o.label) p.label=String(o.label).slice(0,60);
+  if(o.tab) p.tab=String(o.tab).slice(0,40);
+  if(typeof o.given==='number') p.given=o.given;
+  return p;
+}
+function pushOrders(){
+  if(CLOUD.state!=='ready'||!CLOUD.auth||!CLOUD.auth.currentUser) return;
+  S.log.forEach(function(o){
+    var id=oid(o);
+    if(S.pushed[id]||INFLIGHT[id]) return;
+    INFLIGHT[id]=1;
+    CLOUD.db.collection('orders').doc(id).set(orderPayload(o)).then(function(){
+      delete INFLIGHT[id]; S.pushed[id]=1; CLOUD.ordErr=''; save(); refreshSettings();
+    },function(e){
+      delete INFLIGHT[id];
+      CLOUD.ordErr=(e&&e.code==='permission-denied')?'the cloud refused the order (check the rules and that anonymous sign-in is on)':((e&&(e.code||e.message))||'error');
+      refreshSettings();
+    });
+  });
+}
+function queueCloudDeletes(list){
+  if(!CLOUD.configured) return;
+  list.forEach(function(o){ var id=oid(o); if(S.delQ.indexOf(id)<0) S.delQ.push(id); delete S.pushed[id]; });
+}
+function flushDeletes(){
+  if(CLOUD.state!=='ready'||!CLOUD.user||!S.delQ.length) return;
+  var ids=S.delQ.slice();
+  ids.forEach(function(id){
+    CLOUD.db.collection('orders').doc(id).delete().then(function(){
+      var i=S.delQ.indexOf(id); if(i>=0) S.delQ.splice(i,1); save();
+    },function(e){ if(e&&e.code==='permission-denied'){ var i=S.delQ.indexOf(id); if(i>=0) S.delQ.splice(i,1); save(); } });
+  });
+}
+setInterval(function(){
+  if(!CLOUD.configured) return;
+  if(CLOUD.state==='error'&&(typeof navigator==='undefined'||navigator.onLine!==false)) cloudInit();
+  else { pushOrders(); flushDeletes(); }
+},60000);
+if(typeof window==='object'&&window&&window.addEventListener) window.addEventListener('online',function(){ if(CLOUD.state==='error') cloudInit(); else { pushOrders(); flushDeletes(); } });
+function cloudSignIn(){
+  if(CLOUD.state!=='ready') return;
+  var p=new firebase.auth.GoogleAuthProvider();
+  return CLOUD.auth.signInWithPopup(p).then(function(){},function(e){
+    if(e&&e.code!=='auth/popup-closed-by-user'&&e.code!=='auth/cancelled-popup-request') toast('Sign-in failed ('+((e&&e.code)||'error')+')');
+  });
+}
+function cloudSignOut(){ if(CLOUD.auth) CLOUD.auth.signOut(); }
+async function publishMenu(){
+  if(CLOUD.state!=='ready'){toast('The cloud is not connected yet'); return;}
+  if(!CLOUD.user){toast('Sign in first'); return;}
+  var m=menuObj();
+  if(!validMenu(m)){toast('The menu has a problem. Check every name and price.'); return;}
+  var ver=Date.now();
+  var payload={categories:m.categories,items:m.items,extras:m.extras,version:ver,updatedBy:CLOUD.user.email||''};
+  try{
+    var ts=firebase.firestore.FieldValue.serverTimestamp();
+    var batch=CLOUD.db.batch();
+    batch.set(CLOUD.db.collection('menu').doc('current'),Object.assign({updatedAt:ts},payload));
+    batch.set(CLOUD.db.collection('menuHistory').doc(String(ver)),Object.assign({updatedAt:ts},payload));   // every save is kept, so an old menu can be recovered
+    var done=batch.commit().then(function(){return 'saved'});
+    done.catch(function(){});
+    var res=await Promise.race([done,sleep(6000).then(function(){return 'queued'})]);
+    S.menuVersion=ver; S.menuDirty=false; CLOUD.held=false; persistNow(); updateMenuBar(); refreshSettings();
+    toast(res==='saved'?'Menu saved to all tablets':'Saved on this tablet. It will reach the others when the internet is back.');
+  }catch(e){
+    toast(e&&e.code==='permission-denied'?"This Google account isn't allowed to change the menu":'Could not save ('+((e&&(e.code||e.message))||'error')+')');
+  }
+}
+
 /* ---------- Events ---------- */
 document.addEventListener('click',function(e){
   var t=e.target.closest('[data-act]');
@@ -1357,12 +1631,20 @@ document.addEventListener('click',function(e){
     case 'quick': payQuick(t.dataset.v); break;
     case 'complete': complete('cash'); break;
     case 'card': complete('card'); break;
-    case 'resetToday': arm(t,'Tap again to reset',function(){var td=todayStr();S.log=S.log.filter(function(o){return dayOf(o.t)!==td});persistNow();syncOrders();renderSettings();renderTotals();}); break;
+    case 'resetToday': arm(t,'Tap again to reset',function(){var td=todayStr();queueCloudDeletes(S.log.filter(function(o){return dayOf(o.t)===td}));S.log=S.log.filter(function(o){return dayOf(o.t)!==td});prunePushed();persistNow();syncOrders();flushDeletes();renderSettings();renderTotals();}); break;
     case 'resetMenu': arm(t,'Tap again to reset',function(){
-      Object.keys(ITEM).forEach(function(k){var it=ITEM[k]; it.name=it.def.name; it.price=it.def.price; it.avail=true;});
-      Object.keys(EX).forEach(function(k){var x=EX[k]; x.name=x.def.name; x.price=x.def.price;});
-      save(); renderAll(); renderSettings(); toast('Menu reset');
+      buildMenu(DEFAULT_MENU); menuChanged(); renderSettings(); toast('Menu reset to the built-in menu');
     }); break;
+    case 'mAdd': menuAdd(t.dataset.v); break;
+    case 'mUp': menuMove(id,-1); break;
+    case 'mDown': menuMove(id,1); break;
+    case 'mDel': arm(t,'Tap again to delete',function(){menuDelete(id)}); break;
+    case 'xAdd': extraAdd(); break;
+    case 'xDel': arm(t,'Tap again to delete',function(){extraDelete(id)}); break;
+    case 'mSave': publishMenu(); break;
+    case 'mSignIn': cloudSignIn(); break;
+    case 'mSignOut': cloudSignOut(); break;
+    case 'mDiscard': if(CLOUD.latest) applyRemoteMenu(CLOUD.latest,false); break;
   }
 });
 document.addEventListener('input',onFormInput);
@@ -1385,11 +1667,11 @@ $('#label').value=S.label;
 renderAll();
 prInit();
 loadIDB();
+cloudInit();
 // write anything pending when the page is hidden or closed
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden') persistNow()});
 if(window.addEventListener) window.addEventListener('pagehide',persistNow);
 })();
 </script>
-
 </body>
 </html>
