@@ -25,6 +25,8 @@ service cloud.firestore {
       return d.keys().hasOnly(['n','t','label','total','how','given','lines','dev','tab'])
         && d.keys().hasAll(['t','total','how','lines','dev'])
         && d.t is number
+        && (!('n' in d) || d.n is number)
+        && (!('given' in d) || d.given is number)
         && d.total is number && d.total >= 0 && d.total < 10000000
         && d.how in ['cash','card']
         && d.lines is list && d.lines.size() <= 100
