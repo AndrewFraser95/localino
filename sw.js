@@ -1,7 +1,7 @@
 /* LocaLino till service worker.
    Stores the whole app on the tablet so it opens and works with no internet.
    VERSION is rewritten by tools/stamp.js whenever a file changes. */
-const VERSION = 'ab44fb70b8';
+const VERSION = 'b2bed2e3bc';
 const CACHE = 'localino-' + VERSION;
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest', 'firebase-config.js',

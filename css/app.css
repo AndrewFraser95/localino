@@ -291,13 +291,17 @@ label.chip{cursor:pointer}
 .kpi{background:var(--bg);border-radius:12px;padding:12px 14px;display:grid;gap:2px;min-width:0}
 .kpi span{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .kpi b{font:600 26px var(--font-num)}
+.kpi .dl{font:600 12px var(--font-ui);margin-top:2px}
+.kpi .dl.up{color:var(--accent-text)}
+.kpi .dl.down{color:var(--danger)}
+.kpi .dl.flat{color:var(--muted)}
 .split{display:flex;gap:2px;height:22px;border-radius:6px;overflow:hidden}
 .split i{display:block;height:100%;min-width:2px}
 .legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:8px;font-weight:600}
 .legend span{display:inline-flex;align-items:center;gap:6px}
 .legend u{display:inline-block;width:12px;height:12px;border-radius:3px;text-decoration:none}
 .rank{display:grid;gap:8px}
-.rrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 112px;gap:10px;align-items:center}
+.rrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) 132px;gap:10px;align-items:center}
 .rname{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rbar{height:14px;background:var(--bg);border-radius:4px;overflow:hidden}
 .rbar i{display:block;height:100%;background:var(--ch1);border-radius:0 4px 4px 0}
@@ -334,7 +338,12 @@ label.chip{cursor:pointer}
 .hist .ht{font-family:var(--font-num);font-weight:500;color:var(--muted)}
 .hist .hl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
 .hist .tk{margin:0 12px 12px;font-size:16px}
-.hact{display:flex;justify-content:flex-end;padding:0 12px 12px}
+.hact{display:flex;justify-content:flex-end;gap:8px;padding:0 12px 12px;flex-wrap:wrap}
+.erow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.erow .en{font-weight:700;min-width:0}
+.erow .en small{display:block;color:var(--muted);font-weight:600;font-size:13px}
+.erow .ep{font:600 15px var(--font-num);text-align:right}
+.erow .ea{grid-column:1/-1;display:flex;align-items:center;gap:8px;justify-content:space-between}
 .chip:disabled{opacity:.4;cursor:not-allowed}
 .mrow{display:grid;gap:8px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .sact{display:flex;align-items:center;gap:8px;flex-wrap:wrap}

@@ -75,7 +75,7 @@ var todayStr=function(){return new Date().toLocaleDateString('en-CA')};
 var desc=function(){return ''}; // ingredients are not shown; staff know the menu
 
 /* ---------- State ---------- */
-var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr(),print:{auto:false,width:80,name:''},lastExport:0,lastBackup:0,menuVersion:0,menuDirty:false,awake:true,dev:'',tabName:'',pushed:{},delQ:[]};
+var S={tab:'pizza',n:1,label:'',lines:[],sheet:null,log:[],day:todayStr(),print:{auto:false,width:80,name:''},lastExport:0,lastBackup:0,menuVersion:0,menuDirty:false,awake:true,dev:'',tabName:'',pushed:{},delQ:[],editQ:[]};
 
 var DBN='localino-till', IDB=null, ORDKEYS={}, LSHAD=false, RESYNC=false, saveTimer=null, ST={idb:false,persisted:null,err:''};
 function ensureDev(){
@@ -133,6 +133,7 @@ function applyState(d){
   if(typeof d.tabName==='string') S.tabName=d.tabName.slice(0,40);
   if(d.pushed&&typeof d.pushed==='object'&&!Array.isArray(d.pushed)) Object.keys(d.pushed).forEach(function(k){ if(d.pushed[k]) S.pushed[k]=1; });
   if(Array.isArray(d.delQ)) d.delQ.forEach(function(k){ if(typeof k==='string'&&S.delQ.indexOf(k)<0) S.delQ.push(k); });
+  if(Array.isArray(d.editQ)) d.editQ.forEach(function(k){ if(typeof k==='string'&&S.editQ.indexOf(k)<0) S.editQ.push(k); });
   if(typeof d.n==='number'&&d.n>=1) S.n=Math.floor(d.n);
   if(typeof d.label==='string') S.label=d.label.slice(0,40);
   if(Array.isArray(d.lines)) S.lines=d.lines.filter(function(l){return l&&ITEM[l.id]&&l.qty>=1}).map(function(l){
@@ -146,7 +147,7 @@ function applyState(d){
 function stateObj(){
   var items={}; Object.keys(ITEM).forEach(function(id){var it=ITEM[id]; items[id]={name:it.name,price:it.price,avail:it.avail}});
   var extras={}; Object.keys(EX).forEach(function(id){var e=EX[id]; extras[id]={name:e.name,price:e.price}});
-  return {items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,print:S.print,lastExport:S.lastExport,lastBackup:S.lastBackup,menu:menuObj(),menuVersion:S.menuVersion,menuDirty:S.menuDirty,awake:S.awake,dev:S.dev,tabName:S.tabName,pushed:S.pushed,delQ:S.delQ,savedAt:Date.now()};
+  return {items:items,extras:extras,n:S.n,label:S.label,lines:S.lines,day:S.day,print:S.print,lastExport:S.lastExport,lastBackup:S.lastBackup,menu:menuObj(),menuVersion:S.menuVersion,menuDirty:S.menuDirty,awake:S.awake,dev:S.dev,tabName:S.tabName,pushed:S.pushed,delQ:S.delQ,editQ:S.editQ,savedAt:Date.now()};
 }
 // Every order is stored twice: IndexedDB (primary) and a localStorage copy. On start they are merged, so losing one does not lose orders.
 function load(){
@@ -694,14 +695,74 @@ function renderHistory(){
       var what=o.label||o.lines.map(function(l){return l.q+'× '+l.name}).join(', ');
       return '<details><summary><span class="hn">#'+esc(ono(o))+'</span><span class="ht">'+hhmm(o.t)+'</span><span class="hl">'+esc(what)+'</span><span class="hp">'+money(o.total)+'</span></summary>'+
         '<pre class="tk">'+esc(tx.join('\n'))+'</pre>'+
-        (mine[oid(o)]||CLOUD.user?'<div class="hact"><button class="btn sm ghost danger" type="button" data-act="void" data-id="'+esc(oid(o))+'">Void this order</button></div>':'')+'</details>';
+        (mine[oid(o)]||CLOUD.user?'<div class="hact"><button class="btn sm" type="button" data-act="edit" data-id="'+esc(oid(o))+'">Edit order</button><button class="btn sm ghost danger" type="button" data-act="void" data-id="'+esc(oid(o))+'">Void this order</button></div>':'')+'</details>';
     }).join('')+'</div>';
   }
   paintSheet(
-    '<div class="shead"><h2>Orders</h2><p>'+(Object.keys(CLOUDORD).length?'Orders from all tablets. ':'')+'Pick a day, tap an order to see its ticket or void it.</p></div>'+
+    '<div class="shead"><h2>Orders</h2><p>'+(Object.keys(CLOUDORD).length?'Orders from all tablets. ':'')+'Pick a day, tap an order to see its ticket, edit it or void it.</p></div>'+
     '<div class="sbody">'+h+'</div>'+
     '<div class="sfoot"><button class="btn primary" type="button" data-act="close">Close</button></div>'
   );
+}
+
+/* ---- Edit a completed order (quantities, removals, name, payment) ---- */
+var EO=null;
+function openEdit(id){
+  var o=null; viewLog().forEach(function(x){ if(oid(x)===id) o=x; });
+  if(!o) return;
+  EO={id:id,o:o,label:o.label||'',how:o.how,given:o.given!=null?(o.given/100).toFixed(2):'',
+    lines:o.lines.filter(function(l){return l.q>0}).map(function(l){return {q:l.q,name:l.name,mods:l.mods||[],unit:Math.round(l.amt/l.q)}})};
+  renderEdit(); openSheet('edit');
+}
+function eTotal(){return EO.lines.reduce(function(s,l){return s+l.q*l.unit},0)}
+function eGiven(){var v=parseFloat(String(EO.given).replace(',','.')); return isFinite(v)&&v>=0?Math.round(v*100):null}
+function eOk(){ if(!EO.lines.length) return false; if(EO.how==='cash'){var g=eGiven(); return g!==null&&g>=eTotal();} return true; }
+function eMsg(){
+  var t=eTotal(), g=eGiven();
+  if(!EO.lines.length) return 'No items left. Use Void instead.';
+  if(EO.how!=='cash') return 'Paid by card';
+  if(g===null) return 'Enter the cash given';
+  return g>=t?'Change '+money(g-t):money(t-g)+' still to pay';
+}
+function eRefresh(){
+  var m=$('#emsg'), t=$('#etot'), b=$('#esave');
+  if(m) m.textContent=eMsg(); if(t) t.textContent=money(eTotal()); if(b) b.disabled=!eOk();
+}
+function renderEdit(){
+  var h='<div><h3>Name or table</h3><input class="in" id="elabel" data-k="elabel" maxlength="60" autocomplete="off" value="'+esc(EO.label)+'"></div>';
+  h+='<div><h3>Items</h3>'+(EO.lines.length?EO.lines.map(function(l,i){
+    return '<div class="erow"><div class="en">'+esc(l.name)+(l.mods.length?'<small>'+esc(l.mods.join(', '))+'</small>':'')+'</div>'+
+      '<span class="ep">'+money(l.q*l.unit)+'</span>'+
+      '<div class="ea"><div class="step"><button type="button" data-act="eq" data-i="'+i+'" data-v="-1" aria-label="Remove one '+esc(l.name)+'">−</button><span>'+l.q+'</span><button type="button" data-act="eq" data-i="'+i+'" data-v="1" aria-label="Add one '+esc(l.name)+'">+</button></div>'+
+      '<button class="btn sm ghost danger" type="button" data-act="edel" data-i="'+i+'">Remove</button></div></div>';
+  }).join(''):'<p class="hnote" style="margin:0">No items left on this order.</p>')+'</div>';
+  h+='<div><h3>Payment</h3><div class="chips">'+[['cash','Cash'],['card','Card']].map(function(p){
+    return '<button class="chip" type="button" data-act="ehow" data-v="'+p[0]+'" aria-pressed="'+(EO.how===p[0])+'">'+p[1]+'</button>';
+  }).join('')+'</div>'+(EO.how==='cash'?'<label class="money-in" style="margin-top:10px"><span>£</span><input class="in" id="egiven" data-k="egiven" inputmode="decimal" value="'+esc(EO.given)+'" aria-label="Cash given" placeholder="Cash given"></label>':'')+
+    '<p class="hnote" id="emsg">'+esc(eMsg())+'</p></div>';
+  paintSheet(
+    '<div class="shead"><h2>Edit order '+esc(ono(EO.o))+'</h2><p>Changes the takings, the export and the dashboard. The kitchen ticket is not reprinted.</p></div>'+
+    '<div class="sbody">'+h+'</div>'+
+    '<div class="sfoot"><span class="num grow" id="etot">'+money(eTotal())+'</span><button class="btn" type="button" data-act="ecancel">Cancel</button>'+
+      '<button class="btn primary" id="esave" type="button" data-act="esave"'+(eOk()?'':' disabled')+'>Save changes</button></div>'
+  );
+}
+function editBack(){ EO=null; S.sheet='history'; renderHistory(); }
+function saveEdit(){
+  if(!EO||!eOk()) return;
+  var o=EO.o, id=EO.id, local=S.log.indexOf(o)>=0;
+  o.lines=EO.lines.map(function(l){return {q:l.q,name:l.name,mods:l.mods,amt:l.q*l.unit}});
+  o.total=eTotal(); o.how=EO.how; o.given=EO.how==='cash'?eGiven():null;
+  var lab=EO.label.trim(); if(lab) o.label=lab; else delete o.label;
+  if(local){
+    delete ORDKEYS[o.t];   // forces the stored copy to be rewritten
+    if(CLOUD.configured&&S.pushed[id]&&S.editQ.indexOf(id)<0) S.editQ.push(id);
+    persistNow(); syncOrders(); flushEdits();
+  } else if(CLOUD.user&&CLOUD.db){   // another tablet's order, edited by a signed-in owner
+    CLOUD.db.collection('orders').doc(id).set(orderPayload(o)).catch(function(){toast('Could not update that order in the cloud')});
+  }
+  editBack(); renderTotals(); updateBanner();
+  toast('Order '+ono(o)+' updated');
 }
 
 // Void one order (a mis-tap, a walk-out). It leaves the takings, the export and the dashboard.
@@ -723,6 +784,29 @@ function voidOrder(id){
 var DR='week';
 var money0=function(p){return '£'+Math.round(p/100)};
 function dashOrders(){return rangeOrders(DR==='today'?'today':DR==='week'?'week':'all')}
+// The period to compare against: yesterday up to the same time of day, or the 7 days before this week. Nothing for 30 days (no older data kept).
+function prevOrders(){
+  var V=viewLog();
+  if(DR==='today') return V.filter(function(o){return o.t>=daysAgoStart(1)&&o.t<Date.now()-86400000});
+  if(DR==='week') return V.filter(function(o){return o.t>=daysAgoStart(13)&&o.t<daysAgoStart(6)});
+  return null;
+}
+function sumOf(L){
+  var r={tot:0,n:L.length,items:0};
+  L.forEach(function(o){r.tot+=o.total; o.lines.forEach(function(l){r.items+=l.q})});
+  return r;
+}
+function delta(cur,prev,lbl){
+  if(!prev) return '';
+  var p=Math.round((cur-prev)/prev*100), cls=p>0?'up':p<0?'down':'flat';
+  return '<small class="dl '+cls+'">'+(p>0?'▲ +':p<0?'▼ ':'● ')+p+'% vs '+lbl+'</small>';
+}
+function rankRows(list,key,fmt){
+  var mx=Math.max.apply(null,list.map(function(t){return t[key]}).concat([1]));
+  return '<div class="rank">'+list.map(function(t){
+    return '<div class="rrow"><span class="rname" title="'+esc(t.name)+'">'+esc(t.name)+'</span><span class="rbar"><i style="width:'+Math.max(2,Math.round(t[key]/mx*100))+'%"></i></span><span class="rnum">'+fmt(t)+'</span></div>';
+  }).join('')+'</div>';
+}
 function openDash(){DR='week'; renderDash(); openSheet('dash')}
 function colChart(cols,allVals){
   var max=Math.max.apply(null,cols.map(function(c){return c.val}).concat([1]));
@@ -750,19 +834,25 @@ function renderDash(){
   if(!n){
     h+='<div class="empty"><b>No orders in this range yet</b><span>Figures appear here as orders are completed.</span></div>';
   } else {
-    h+='<div class="kpis"><div class="kpi"><span>Takings</span><b>'+money(tot)+'</b></div>'+
-      '<div class="kpi"><span>Orders</span><b>'+n+'</b></div>'+
-      '<div class="kpi"><span>Average order</span><b>'+money(Math.round(tot/n))+'</b></div>'+
-      '<div class="kpi"><span>Items sold</span><b>'+items+'</b></div></div>';
+    var PL=prevOrders(), pv=PL&&PL.length?sumOf(PL):null, plbl=DR==='today'?'yesterday so far':'previous 7 days';
+    h+='<div class="kpis"><div class="kpi"><span>Takings</span><b>'+money(tot)+'</b>'+delta(tot,pv&&pv.tot,plbl)+'</div>'+
+      '<div class="kpi"><span>Orders</span><b>'+n+'</b>'+delta(n,pv&&pv.n,plbl)+'</div>'+
+      '<div class="kpi"><span>Average order</span><b>'+money(Math.round(tot/n))+'</b>'+delta(tot/n,pv&&pv.tot/pv.n,plbl)+'</div>'+
+      '<div class="kpi"><span>Items sold</span><b>'+items+'</b>'+delta(items,pv&&pv.items,plbl)+'</div></div>';
     var pc=tot?Math.round(cash/tot*100):0, pk=tot?100-pc:0;
     h+='<div><h3>Cash and card</h3><div class="split" role="img" aria-label="Cash '+pc+' percent, card '+pk+' percent">'+
       (cash?'<i style="flex:'+cash+';background:var(--ch1)"></i>':'')+(card?'<i style="flex:'+card+';background:var(--ch2)"></i>':'')+'</div>'+
       '<div class="legend"><span><u style="background:var(--ch1)"></u>Cash '+money(cash)+' · '+pc+'%</span><span><u style="background:var(--ch2)"></u>Card '+money(card)+' · '+pk+'%</span></div></div>';
     var top=Object.keys(byItem).map(function(k){return {name:k,q:byItem[k].q,amt:byItem[k].amt}}).sort(function(a,b){return b.q-a.q||b.amt-a.amt}).slice(0,8);
-    var mq=top[0].q;
-    h+='<div><h3>Best sellers</h3><div class="rank">'+top.map(function(t){
-      return '<div class="rrow"><span class="rname" title="'+esc(t.name)+'">'+esc(t.name)+'</span><span class="rbar"><i style="width:'+Math.max(2,Math.round(t.q/mq*100))+'%"></i></span><span class="rnum">'+t.q+' · '+money(t.amt)+'</span></div>';
-    }).join('')+'</div></div>';
+    h+='<div><h3>Best sellers</h3>'+rankRows(top,'q',function(t){return t.q+' · '+money(t.amt)})+'</div>';
+    // Which part of the menu earns the money. Items are matched to the current menu by name; anything renamed or removed falls under Other.
+    var catOfName={}; CATS.forEach(function(c){c.items.forEach(function(it){catOfName[it.name.toLowerCase()]=c.name})});
+    var byCat={}; L.forEach(function(o){o.lines.forEach(function(l){var cn=catOfName[l.name.toLowerCase()]||'Other'; byCat[cn]=(byCat[cn]||0)+l.amt;})});
+    var catList=Object.keys(byCat).map(function(k){return {name:k,amt:byCat[k]}}).sort(function(a,b){return b.amt-a.amt}), catTot=catList.reduce(function(s,c){return s+c.amt},0)||1;
+    h+='<div><h3>Takings by menu section</h3>'+rankRows(catList,'amt',function(t){return money(t.amt)+' · '+Math.round(t.amt/catTot*100)+'%'})+'</div>';
+    var byTab={}; L.forEach(function(o){var k=o.tab||'Unnamed'; var b=byTab[k]||(byTab[k]={name:k,amt:0,n:0}); b.amt+=o.total; b.n++;});
+    var tabList=Object.keys(byTab).map(function(k){return byTab[k]}).sort(function(a,b){return b.amt-a.amt});
+    if(tabList.length>1) h+='<div><h3>By tablet</h3>'+rankRows(tabList,'amt',function(t){return t.n+(t.n===1?' order':' orders')+' · '+money(t.amt)})+'</div>';
     var hrs=Object.keys(byHour).map(Number), hmin=Math.min.apply(null,hrs), hmax=Math.max.apply(null,hrs), cols=[], busy=hmin;
     for(var x=hmin;x<=hmax;x++){
       var bh=byHour[x]||{amt:0,n:0}; if(bh.n>(byHour[busy]||{n:0}).n) busy=x;
@@ -897,6 +987,8 @@ function onFormInput(e){
   var k=el.dataset&&el.dataset.k; if(!k) return;
   if(k==='prauto'){S.print.auto=el.checked; save(); return;}
   if(k==='hday'){HD=el.value; renderHistory(); return;}
+  if(k==='elabel'&&EO){EO.label=el.value.slice(0,60); return;}
+  if(k==='egiven'&&EO){EO.given=el.value; eRefresh(); return;}
   if(k==='restore'){restoreFile(el); return;}
   if(k==='tabname'){S.tabName=el.value.slice(0,40); save(); return;}
   if(k==='awake'){S.awake=el.checked; save(); wakeSync(); return;}
@@ -1154,7 +1246,17 @@ function queueCloudDeletes(list){
   if(!CLOUD.configured) return;
   list.forEach(function(o){ var id=oid(o); if(S.delQ.indexOf(id)<0) S.delQ.push(id); delete S.pushed[id]; });
 }
+function flushEdits(){
+  if(CLOUD.state!=='ready'||!CLOUD.user||!S.editQ.length) return;
+  S.editQ.slice().forEach(function(id){
+    var o=null; S.log.forEach(function(x){ if(oid(x)===id) o=x; });
+    var done=function(){ var i=S.editQ.indexOf(id); if(i>=0) S.editQ.splice(i,1); save(); };
+    if(!o){ done(); return; }
+    CLOUD.db.collection('orders').doc(id).set(orderPayload(o)).then(done,function(e){ if(e&&e.code==='permission-denied') done(); });
+  });
+}
 function flushDeletes(){
+  flushEdits();
   if(CLOUD.state!=='ready'||!CLOUD.user||!S.delQ.length) return;
   var ids=S.delQ.slice();
   ids.forEach(function(id){
@@ -1224,6 +1326,14 @@ document.addEventListener('click',function(e){
     case 'settings': openSettings(); break;
     case 'history': openHistory(); break;
     case 'export': exportOrders(t.dataset.v); break;
+    case 'edit': openEdit(id); break;
+    case 'eq':
+      var el=EO&&EO.lines[+t.dataset.i]; if(el){ el.q+=+t.dataset.v; if(el.q<1) EO.lines.splice(+t.dataset.i,1); renderEdit(); }
+      break;
+    case 'edel': if(EO){ EO.lines.splice(+t.dataset.i,1); renderEdit(); } break;
+    case 'ehow': if(EO){ EO.how=t.dataset.v; renderEdit(); } break;
+    case 'esave': saveEdit(); break;
+    case 'ecancel': editBack(); break;
     case 'void': arm(t,'Tap again to void',function(){voidOrder(id)}); break;
     case 'dash': openDash(); break;
     case 'dashrange': DR=t.dataset.v; renderDash(); break;
